@@ -1,0 +1,20 @@
+{
+  "port": 8080,
+
+  "max_request_size": 134217728,
+  "max_loggable_request_size": 128,
+  "max_collection_elements": 256,
+
+  "db_host": "localhost",
+  "db_port": 5432,
+
+  "db_name": "studs",
+
+  "table_names_prefix": "david_lab_",
+
+  "db_user": "s265472",
+  "db_password": "tpn064",
+
+  "out_log_file": "logs/out.log",
+  "err_log_file": "logs/err.log"
+}
