@@ -7,9 +7,8 @@ class CreatureFactory {
      * Создаёт экземпляр класса Creature по заданному json-объекту
      * @param object json-объект, представляющий экземпляр класса Creature
      * @return экземпляр класса Creature
-     * @throws Exception когда что-то идёт не так
      */
-    private static Creature generate(JSONObject object) throws Exception {
+    private static Creature generate(JSONObject object) {
         JSONEntity x = object.getItem("x");
         JSONEntity y = object.getItem("y");
 
@@ -19,20 +18,20 @@ class CreatureFactory {
             throw new IllegalArgumentException("Требуется параметр 'y', но он не указан");
 
         Creature creature = new Creature(
-                x.toInt(new IllegalArgumentException("Параметр 'x' должен быть числом, но это " + x.getTypeName())),
-                y.toInt(new IllegalArgumentException("Параметр 'y' должен быть числом, но это " + y.getTypeName())));
+                (int)x.toNumber("Параметр 'x' должен быть числом, но это " + x.getTypeName()).getValue(),
+                (int)y.toNumber("Параметр 'y' должен быть числом, но это " + y.getTypeName()).getValue());
 
         JSONEntity width = object.getItem("width");
         if (width != null)
-            creature.setWidth(width.toInt(new IllegalArgumentException("Указанная ширина должна быть числом, но это " + width.getTypeName())));
+            creature.setWidth((int)width.toNumber("Указанная ширина должна быть числом, но это " + width.getTypeName()).getValue());
 
         JSONEntity height = object.getItem("height");
         if (height != null)
-            creature.setHeight(height.toInt(new IllegalArgumentException("Указанная вцысота должна быть числом, но это " + height.getTypeName())));
+            creature.setHeight((int)(height.toNumber("Указанная вцысота должна быть числом, но это " + height.getTypeName())).getValue());
 
         JSONEntity name = object.getItem("name");
         if (name != null)
-            creature.setName(name.toString(new IllegalArgumentException("Указанное имя должно быть строкой, но это " + name.getTypeName())).getContent());
+            creature.setName(name.toString("Указанное имя должно быть строкой, но это " + name.getTypeName()).getContent());
 
         return creature;
     }
@@ -65,9 +64,7 @@ class CreatureFactory {
             for (int i = 0; i < array.size(); i++)
                 creatures[i] = generate(
                         array.getItem(i).toObject(
-                                new IllegalArgumentException(
-                                        "Все элементы массива должны быть объектами, но элемент с индексом " + i + " имеет тип " + array.getItem(i).getTypeName()
-                                )
+                                "Все элементы массива должны быть объектами, но элемент с индексом " + i + " имеет тип " + array.getItem(i).getTypeName()
                         )
                 );
             return creatures;
