@@ -8,7 +8,7 @@ public class TeeOutputStream extends OutputStream {
     private final OutputStream out;
     private final OutputStream tee;
 
-    public TeeOutputStream(OutputStream out, OutputStream tee) {
+    TeeOutputStream(OutputStream out, OutputStream tee) {
         if (out == null)
             throw new NullPointerException();
         else if (tee == null)
