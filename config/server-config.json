@@ -19,5 +19,8 @@
   "user_token_timeout": 90000,
 
   "out_log_file": "logs/out.log",
-  "err_log_file": "logs/err.log"
+  "err_log_file": "logs/err.log",
+
+  "jdbc_driver": "org.postgresql.Driver",
+  "jdbc_lang_protocol": "postgresql"
 }
