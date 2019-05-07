@@ -3,7 +3,7 @@
 
   "max_request_size": 134217728,
   "max_loggable_request_size": 128,
-  "max_collection_elements": 256,
+  "max_user_elements": 256,
 
   "db_host": "localhost",
   "db_port": 5432,
@@ -14,6 +14,9 @@
 
   "db_user": "s265472",
   "db_password": "tpn064",
+
+  "registration_token_timeout": 60000,
+  "user_token_timeout": 90000,
 
   "out_log_file": "logs/out.log",
   "err_log_file": "logs/err.log"
