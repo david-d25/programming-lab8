@@ -7,3 +7,4 @@ javadoc/
 config/
 test_*.xml
 *.plantuml
+~$*
