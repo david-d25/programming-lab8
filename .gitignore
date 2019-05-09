@@ -4,5 +4,6 @@ logs/
 jars/
 saves/
 javadoc/
+config/
 test_*.xml
 *.plantuml
