@@ -7,30 +7,30 @@ import java.io.Serializable;
  * используется для соответствия требованию о сериализации передаваемых объектов
  * и для решения проблемы с разделением команды и её объектов-аргументов
  */
-public class Message<T extends Serializable> implements Serializable {
+public class Message implements Serializable {
     private String message;
-    private T argument;
+    private Serializable attachment;
     private boolean endFlag;
 
     /**
-     * Создаёт сообщение с указанным текстовым запросом, объектом-аргументов и флагом окончания
+     * Создаёт сообщение с указанным текстовым запросом, объектом-приложением и флагом окончания
      * @param message текстовый запрос
-     * @param argument объект-аргумент, прикреплённый к сообщению
+     * @param attachment объект-приложение, прикреплённый к сообщению
      * @param endFlag флаг окончания
      */
-    public Message(String message, T argument, boolean endFlag) {
+    public Message(String message, Serializable attachment, boolean endFlag) {
         this.message = message;
-        this.argument = argument;
+        this.attachment = attachment;
         this.endFlag = endFlag;
     }
 
     /**
-     * Создаёт сообщение с указанным текстовым запросом и объектом-аргументом
+     * Создаёт сообщение с указанным текстовым запросом и объектом-приложением
      * @param message текстовый запрос
-     * @param argument объект-аргумент, прикреплённый к сообщению
+     * @param attachment объект-приложение, прикреплённый к сообщению
      */
-    public Message(String message, T argument) {
-        this(message, argument, false);
+    public Message(String message, Serializable attachment) {
+        this(message, attachment, false);
     }
 
     /**
@@ -58,17 +58,26 @@ public class Message<T extends Serializable> implements Serializable {
     }
 
     /**
-     * @return объект-аргумент, прикреплённый к сообщению
+     * @return объект-приложение, прикреплённое к сообщению
      */
-    public T getArgument() {
-        return argument;
+    public Serializable getAttachment() {
+        return attachment;
     }
 
     /**
-     * @return true, если к сообщению прикреплён объект-аругмент
+     * Устанавливает приложение к сообщению
+     *
+     * @param attachment объект-приложение
      */
-    public boolean hasArgument() {
-        return argument != null;
+    public void setAttachment(Serializable attachment) {
+        this.attachment = attachment;
+    }
+
+    /**
+     * @return true, если к сообщению прикреплено объект-приложение
+     */
+    public boolean hasAttachment() {
+        return attachment != null;
     }
 
     /**
