@@ -1,10 +1,10 @@
-package ru.david.room;
+package ru.david.room.client;
 
-public class Command {
-    public String name;
-    public String argument;
+class Command {
+    String name;
+    String argument;
 
-    public Command (String command) {
+    Command(String command) {
         int spaceIndex = command.indexOf(' ');
         if (spaceIndex == -1)
             name = command;
