@@ -1,5 +1,7 @@
 package ru.david.room.json;
 
+import java.io.Serializable;
+
 /**
  * Абстрация для любой json-сущеости (объект, массив или любое значение)
  * @see JSONArray
@@ -8,7 +10,7 @@ package ru.david.room.json;
  * @see JSONBoolean
  * @see JSONString
  */
-public class JSONEntity {
+public class JSONEntity implements Serializable {
     protected JSONType type;
 
     /**

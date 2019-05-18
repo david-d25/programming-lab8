@@ -2,7 +2,7 @@ package ru.david.room;
 
 import ru.david.room.json.*;
 
-class CreatureFactory {
+public class CreatureFactory {
     /**
      * Создаёт экземпляр класса Creature по заданному json-объекту
      * @param object json-объект, представляющий экземпляр класса Creature
@@ -44,7 +44,7 @@ class CreatureFactory {
      * @return массив существ
      * @throws Exception если что-то пойдет не так
      */
-    static Creature[] generate(String json) throws Exception {
+    public static Creature[] generate(String json) throws Exception {
         JSONEntity entity;
 
         try {

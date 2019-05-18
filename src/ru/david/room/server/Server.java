@@ -36,6 +36,7 @@ public class Server {
             logger.err("Ошибка создания серверного сокета (" + e.getMessage() + "), приложение будет остановлено.");
             System.exit(1);
         }
+
         while (true) {
             try {
                 Socket clientSocket = serverSocket.accept();
@@ -48,7 +49,7 @@ public class Server {
 
     /**
      * Инициализирует логгер для сервера.
-     * Перед вызовом этого метода сервер должен быть сконфигурирован (должен быть вызван {@link Server#initConfig(String)}).
+     * Перед вызовом этого метода сервер должен быть сконфигурирован (должен быть вызван {@link #initConfig(String)}).
      * При необходимости создаёт все директории, отсутствующие в пути создаваемых файлов.
      */
     private static void initLogger() {
@@ -67,6 +68,13 @@ public class Server {
         } catch (IOException e) {
             die("Ошибка записи логов: " + e.getMessage());
         }
+    }
+
+    /**
+     * @return Конфигурация сервера
+     */
+    static ServerConfig getConfig() {
+        return config;
     }
 
     /**

@@ -16,12 +16,12 @@ public class JSONParser {
      * чтобы понять, в чём проблема.
      */
     public static JSONEntity parse(String json) throws JSONParseException {
-        json = json.replaceAll("\\s", "");
-
         return process(json);
     }
 
     private static JSONEntity process(String source) throws JSONParseException {
+        source = source.trim();
+
         if (isNull(source))
             return null;
 
@@ -35,7 +35,7 @@ public class JSONParser {
             return new JSONNumber(Double.parseDouble(source));
 
         else if (isArray(source)) {
-            String trimmed = source.substring(1, source.length()-1);
+            String trimmed = trimWithBrackets(source);
             ArrayList<Integer> commas = getValidCommas(trimmed);
 
             if (commas.size() == 0) {
@@ -57,7 +57,7 @@ public class JSONParser {
             return result;
 
         } else if (isObject(source)) {
-            String trimmed = source.substring(1, source.length()-1);
+            String trimmed = trimWithBrackets(source);
             ArrayList<Integer> commas = getValidCommas(trimmed);
 
             if (commas.size() == 0) {
@@ -82,19 +82,23 @@ public class JSONParser {
             throw new JSONParseException("Не удалось обработать эту часть json: " + source);
     }
 
+    private static String trimWithBrackets(String source) {
+        return source.trim().substring(1, source.length()-1);
+    }
+
     private static Map.Entry<String, JSONEntity> makeObjectEntry(String source) throws JSONParseException{
         int colonIndex = source.indexOf(':');
 
         if (colonIndex == -1)
             throw new JSONParseException("В json-объекте между ключом и значением должно быть двоеточие: " + source);
 
-        String key = source.substring(0, colonIndex);
+        String key = source.substring(0, colonIndex).trim();
 
         if (key.length() < 3)
             throw new JSONParseException("В этой месте пустой ключ: " + source);
 
         key = key.substring(1, key.length()-1);
-        String value = source.substring(colonIndex+1);
+        String value = source.substring(colonIndex+1).trim();
 
         if (value.length() == 0)
             throw new JSONParseException("В этом месте не указано значение: " + source);

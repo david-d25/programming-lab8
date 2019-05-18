@@ -1,6 +1,6 @@
 package ru.david.room.client;
 
-import ru.david.room.GlobalConstants;
+import ru.david.room.Utils;
 
 import java.io.*;
 
@@ -40,6 +40,18 @@ public class UserInteractor {
     }
 
     /**
+     * Выводит на экран сообщение. Если в данный момент работают функции {@link #prompt(String)} или
+     * {@link #promptHidden(String)}, текст их приглашения перезаписывается новым сообщением.
+     *
+     * @param message сообщение
+     */
+    synchronized void alert(String message) {
+        System.out.print("\r");
+        System.out.println(message);
+        System.out.print(Client.generatePromptMessage());
+    }
+
+    /**
      * Работает аналогично {@link UserInteractor#prompt(String)}, но скрывает вводимый пользователем ответ.
      * Может использоваться для ввода секретной инфомации, такой как пароли.
      *
@@ -49,13 +61,13 @@ public class UserInteractor {
      *
      * @throws IOException Если проихойдёт ошибка ввода
      */
-    String promptHidden(String message) throws IOException {
+    synchronized String promptHidden(String message) throws IOException {
         Console console = System.console();
         if (console == null) {
-            System.out.println( GlobalConstants.ANSI_YELLOW +
-                                "Не удалось получить доступ к консоли. Введённая далее информация не будет скрыта." +
-                                GlobalConstants.ANSI_RESET
-            );
+            System.out.println(Utils.colorize(
+                                "[[yellow]]Среда не позволяет скрыть ваш ввод. " +
+                                        "Убедитесь, что никто не стоит за спиной.[[reset]]"
+            ));
             return prompt(message);
         }
         char[] responseArray = console.readPassword(message);
@@ -73,7 +85,7 @@ public class UserInteractor {
      *
      * @throws IOException Если проихойдёт ошибка ввода
      */
-    public boolean confirm(String question, boolean defaultAnswer) throws IOException {
+    public synchronized boolean confirm(String question, boolean defaultAnswer) throws IOException {
         System.out.print(question);
         while (true) {
             if (defaultAnswer)

@@ -1,5 +1,6 @@
 package ru.david.room.json;
 
+import java.io.Serializable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NoSuchElementException;
@@ -84,6 +85,15 @@ public class JSONObject extends JSONEntity {
      */
     public void putItem(String key, JSONEntity value) {
         items.put(key, value);
+    }
+
+    /**
+     * Добавляет пару ключ-значение в json-объект
+     * @param key   ключ элемента
+     * @param value значение элемента
+     */
+    public void putItem(String key, String value) {
+        items.put(key, new JSONString(value));
     }
 
     /**

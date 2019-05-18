@@ -14,6 +14,7 @@ class ClientConfig {
 
     private String serverHost;
     private int serverPort;
+    private int serverBroadcastPort;
 
     /**
      * Возвращает новый экземпляр {@link ClientConfig}, в который загружены
@@ -44,6 +45,10 @@ class ClientConfig {
                 "server_port",
                 "Порт сервера не указан. Укажите его в параметре 'server_port'"
         );
+        JSONEntity serverBroadcastPortEntity = object.getItemNotNull(
+                "server_broadcast_port",
+                "Широковещательный порт сервера не указан. Укажите его в параметре 'server_broadcast_port'"
+        );
 
         // Extracting variables
         String serverHost = serverHostEntity.toString(
@@ -56,9 +61,15 @@ class ClientConfig {
                         "Проверьте значение параметра 'server_port'"
         ).getValue();
 
+        int serverBroadcastPort = (int)serverBroadcastPortEntity.toNumber(
+                "Широковещательный порт сервера должен быть числом, но это " + serverBroadcastPortEntity.getTypeName() + "\n" +
+                        "Проверьте значение параметра 'server_broadcast_port'"
+        ).getValue();
+
         // Setting variables
         config.setServerHost(serverHost);
         config.setServerPort(serverPort);
+        config.setServerBroadcastPort(serverBroadcastPort);
 
         return config;
     }
@@ -90,5 +101,21 @@ class ClientConfig {
         if (port < 1 || port > 65535)
             throw new IllegalArgumentException("Порт должен быть в пределах от 1 до 65535");
         this.serverPort = port;
+    }
+
+    /**
+     * @return Широковещательный порт сервера
+     */
+    public int getServerBroadcastPort() {
+        return serverBroadcastPort;
+    }
+
+    /**
+     * Устанавливает широковещательный порт сервера
+     * Порт должен находиться в пределах от 1 до 65535.
+     * @param port номер порта
+     */
+    public void setServerBroadcastPort(int port) {
+        this.serverBroadcastPort = port;
     }
 }

@@ -11,13 +11,13 @@ class WelcomePhrases {
             "Привет, салага! У меня есть годное дерьмо для тебя",
             String.format(
                     "%sПри%sвет%s сту%sден%sтам И%sТМО%s",
-                    ANSI_RED,
-                    ANSI_YELLOW,
-                    ANSI_GREEN,
-                    ANSI_CYAN,
-                    ANSI_BLUE,
-                    ANSI_PURPLE,
-                    ANSI_RESET
+                    ANSI_COLORS.RED,
+                    ANSI_COLORS.YELLOW,
+                    ANSI_COLORS.GREEN,
+                    ANSI_COLORS.CYAN,
+                    ANSI_COLORS.BLUE,
+                    ANSI_COLORS.PURPLE,
+                    ANSI_COLORS.RESET
             ),
             "Сегодня отличная погода, не правда ли?",
             "Лишь глупцы называют своеволие свободой.\n  - Публий Корнелий Тацит",

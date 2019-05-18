@@ -1,5 +1,7 @@
 package ru.david.room.server;
 
+import ru.david.room.Utils;
+
 import java.io.PrintStream;
 import java.util.Calendar;
 import java.util.Date;
@@ -22,7 +24,12 @@ class Logger {
     }
 
     void err(String message) {
-        err.println(ANSI_RED + generateLogTime() + "[ ПРОБЛЕМА ] " + message + ANSI_RESET);
+        err.println(Utils.colorize("[[red]]" + generateLogTime() + "[ ОШИБКА ] " + message + "[[reset]]"));
+        err.flush();
+    }
+
+    void warn(String message) {
+        err.println(Utils.colorize("[[yellow]]" + generateLogTime() + "[ ПРОБЛЕМА ] " + message + "[[reset]]"));
         err.flush();
     }
 

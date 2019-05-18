@@ -16,6 +16,7 @@ public class ServerConfig {
     private ServerConfig() {}
 
     private int port;
+    private int broadcastPort;
 
     private int maxRequestSize;
     private int maxLoggableRequestSize;
@@ -30,6 +31,7 @@ public class ServerConfig {
     private String databaseUser;
     private String databasePassword;
 
+    private long passwordResetTokenTimeout;
     private long registrationTokenTimeout;
     private long userTokenTimeout;
 
@@ -39,11 +41,20 @@ public class ServerConfig {
     private String jdbcDriver;
     private String jdbcLangProtocol;
 
+    private String smtpHost;
+    private int smtpPort;
+    private boolean smtpSSLEnabled;
+
+    private String mailUsername;
+    private String mailPassword;
+
+    private String emailFrom;
+
     /**
-     * Возвращает новый экземпляр ServerConfig, в который загружены
+     * Возвращает новый экземпляр {@link ServerConfig}, в который загружены
      * настройки из указанного файла. Файл должен быть в формате JSON.
      * @param filename файл, из которого следует загрузить настройки
-     * @return экземпляр ServerConfig с настройками из файла
+     * @return экземпляр {@link ServerConfig} с настройками из файла
      * @throws IOException В случае ошибки ввода/вывода
      * @throws JSONParseException В случае синтаксической ошибки json
      * @throws NoSuchElementException Когда отсутствует какой-то обязательный параметр
@@ -63,6 +74,10 @@ public class ServerConfig {
         JSONEntity portEntity = object.getItemNotNull(
                 "port",
                 "Порт не указан, укажите его в параметре 'port'"
+        );
+        JSONEntity broadcastPortEntity = object.getItemNotNull(
+                "broadcast_port",
+                "Широковещательный порт не указан, укажите его в параметре 'broadcast_port'"
         );
 
         JSONEntity maxRequestSizeEntity = object.getItemNotNull(
@@ -107,6 +122,10 @@ public class ServerConfig {
                         "Если пароль не требуется для входа, укажите пустую строку."
         );
 
+        JSONEntity passwordResetTokenTimeoutEntity = object.getItemNotNull(
+                "password_reset_token_timeout",
+                "Время жизни токена сброса пароля не указано, укажите его в параметре 'password_reset_token_timeout'"
+        );
         JSONEntity registrationTokenTimeoutEntity = object.getItemNotNull(
                 "registration_token_timeout",
                 "Время жизни токена регистрации не указано, укажите его в параметре 'registration_token_timeout'"
@@ -134,10 +153,42 @@ public class ServerConfig {
                 "Протокол языка базы данных не указан, укажите его в параметре 'jdbc_lang_protocol'"
         );
 
+        JSONEntity smtpHostEntity = object.getItemNotNull(
+                "smtp_host",
+                "Хост SMTP не указан, укажите его в параметре 'smtp_host'"
+        );
+        JSONEntity smtpPortEntity = object.getItemNotNull(
+                "smtp_port",
+                "Порт SMTP не указан, укажите его в параметре 'smtp_port'"
+        );
+        JSONEntity smtpSSLEnabledEntity = object.getItemNotNull(
+                "smtp_ssl_enabled",
+                "Флаг режима SSL не указан, укажите его в параметре 'smtp_ssl_enabled'"
+        );
+
+        JSONEntity mailUsernameEntity = object.getItemNotNull(
+                "mail_username",
+                "Имя пользователя электронной почты не указано, укажите его в параметре 'mail_username'"
+        );
+        JSONEntity mailPasswordEntity = object.getItemNotNull(
+                "mail_password",
+                "Пароль электронной почты не указан, укажите его в параметре 'mail_password'"
+        );
+
+        JSONEntity emailFromEntity = object.getItemNotNull(
+                "email_from",
+                "Отправитель писем не указан, укажите его в параметре 'email_from'"
+        );
+
         // Extracting Java-type variables
         int port = (int)portEntity.toNumber(
                 "Порт должен быть числом, но это " + portEntity.getTypeName() + ".\n" +
                         "Проверьте значение параметра 'port'"
+        ).getValue();
+
+        int broadcastPort = (int)broadcastPortEntity.toNumber(
+                "Широковещательный порт должен быть числом, но это " + broadcastPortEntity.getTypeName() + ".\n" +
+                        "Проверьте значение параметра 'broadcast_port'"
         ).getValue();
 
         int maxRequestSize = (int)maxRequestSizeEntity.toNumber(
@@ -185,6 +236,11 @@ public class ServerConfig {
                         "Проверьте значение парамтра 'db_password'"
         ).getContent();
 
+        long passwordResetTokenTimeout = (long)passwordResetTokenTimeoutEntity.toNumber(
+                "Время жизни токена сброса пароля должно быть числом, но это " + passwordResetTokenTimeoutEntity.getTypeName() + ".\n" +
+                        "Проверьте значение параметра 'password_reset_token_timeout'"
+        ).getValue();
+
         long registrationTokenTimeout = (long)registrationTokenTimeoutEntity.toNumber(
                 "Время жизни токена регистрации должно быть числом, но это " + registrationTokenTimeoutEntity.getTypeName() + ".\n" +
                         "Проверьте значение параметра 'registration_token_timeout'"
@@ -215,8 +271,39 @@ public class ServerConfig {
                         "Проверье значение параметра 'jdbc_lang_protocol'"
         ).getContent();
 
+        String smtpHost = smtpHostEntity.toString(
+                "Хост SMTP должен быть строкой, но это " + smtpHostEntity.getTypeName() + "\n" +
+                        "Проверьте значение параметра 'smtp_host'"
+        ).getContent();
+
+        int smtpPort = (int)smtpPortEntity.toNumber(
+                "Порт SMTP должен быть числом, но это " + smtpPortEntity.getTypeName() + "\n" +
+                        "Проверьте значение параметра 'smtp_port'"
+        ).getValue();
+
+        boolean smtpSSLEnabled = smtpSSLEnabledEntity.toBoolean(
+                "Флаг режиме SSL должен быть логическим типом, но это " + smtpSSLEnabledEntity.getTypeName() + "\n" +
+                        "Проверьте значение параметра 'smtp_ssl_enabled"
+        ).getValue();
+
+        String mailUsername = mailUsernameEntity.toString(
+                "Имя пользователя электронной почты должно быть строкой, но это " + mailUsernameEntity.getTypeName() + "\n" +
+                        "Проверьте значение параметра 'mail_username'"
+        ).getContent();
+
+        String mailPassword = mailPasswordEntity.toString(
+                "Пароль электронной почты должен быть строкой, но это " + mailPasswordEntity.getTypeName() + "\n" +
+                        "Проверьте значение параметра 'mail_password'"
+        ).getContent();
+
+        String emailFrom = emailFromEntity.toString(
+                "Отправитель писем должен быть строкой, но это " + emailFromEntity.getTypeName() + "\n" +
+                        "Проверьте значение параметра 'email_from'"
+        ).getContent();
+
         // Setting variables
         result.setPort(port);
+        result.setBroadcastPort(broadcastPort);
         result.setMaxRequestSize(maxRequestSize);
         result.setMaxLoggableRequestSize(maxLoggableRequestSize);
         result.setMaxUserElements(maxUserElements);
@@ -227,11 +314,18 @@ public class ServerConfig {
         result.setDatabaseUser(databaseUser);
         result.setDatabasePassword(databasePassword);
         result.setRegistrationTokenTimeout(registrationTokenTimeout);
+        result.setPasswordResetTokenTimeout(passwordResetTokenTimeout);
         result.setUserTokenTimeout(userTokenTimeout);
         result.setOutLogFile(outLogFile);
         result.setErrLogFile(errLogFile);
         result.setJdbcDriver(jdbcDriver);
         result.setJdbcLangProtocol(jdbcLangProtocol);
+        result.setSmtpHost(smtpHost);
+        result.setSmtpPort(smtpPort);
+        result.setSmtpSSLEnabled(smtpSSLEnabled);
+        result.setMailUsername(mailUsername);
+        result.setMailPassword(mailPassword);
+        result.setEmailFrom(emailFrom);
 
         return result;
     }
@@ -252,6 +346,24 @@ public class ServerConfig {
         if (port < 1 || port > 65535)
             throw new IllegalArgumentException("Порт должен быть в пределах от 1 до 65535");
         this.port = port;
+    }
+
+    /**
+     * @return Широковещательный порт сервера
+     */
+    public int getBroadcastPort() {
+        return broadcastPort;
+    }
+
+    /**
+     * Устанавливает широковещательный порт, который следует слушать серверу.
+     * Порт должен находиться в пределах от 1 до 65535.
+     * @param port номер порта
+     */
+    public void setBroadcastPort(int port) {
+        if (port < 1 || port > 65535)
+            throw new IllegalArgumentException("Порт должен быть в пределах от 1 до 65535");
+        this.broadcastPort = port;
     }
 
     /**
@@ -364,6 +476,17 @@ public class ServerConfig {
     }
 
     /**
+     * @return Время жизни токена сброса пароля
+     */
+    public long getPasswordResetTokenTimeout() {
+        return passwordResetTokenTimeout;
+    }
+
+    public void setPasswordResetTokenTimeout(long passwordResetTokenTimeout) {
+        this.passwordResetTokenTimeout = passwordResetTokenTimeout;
+    }
+
+    /**
      * @return Время жизни токена регистрации
      */
     public long getRegistrationTokenTimeout() {
@@ -427,5 +550,79 @@ public class ServerConfig {
 
     public void setJdbcLangProtocol(String jdbcLangProtocol) {
         this.jdbcLangProtocol = jdbcLangProtocol;
+    }
+
+    /**
+     * @return Хост SMTP для отправки писем
+     */
+    public String getSmtpHost() {
+        return smtpHost;
+    }
+
+    public void setSmtpHost(String smtpHost) {
+        this.smtpHost = smtpHost;
+    }
+
+    /**
+     * @return Порт SMTP для отправки писем
+     */
+    public int getSmtpPort() {
+        return smtpPort;
+    }
+
+    /**
+     * Устанавливает порт SMTP для отправки писем.
+     * Номер порта должен быть от 1 до 65535
+     *
+     * @param smtpPort номер порта
+     */
+    public void setSmtpPort(int smtpPort) {
+        if (port < 1 || port > 65535)
+            throw new IllegalArgumentException("Порт должен быть в пределах от 1 до 65535");
+        this.smtpPort = smtpPort;
+    }
+
+    /**
+     * @return Флаг, укажиывающий, следует ли использовать SSL
+     */
+    public boolean isSmtpSSLEnabled() {
+        return smtpSSLEnabled;
+    }
+
+    public void setSmtpSSLEnabled(boolean smtpSSLEnabled) {
+        this.smtpSSLEnabled = smtpSSLEnabled;
+    }
+
+    /**
+     * @return Имя пользователя адреса электронной почты
+     */
+    public String getMailUsername() {
+        return mailUsername;
+    }
+
+    public void setMailUsername(String mailUsername) {
+        this.mailUsername = mailUsername;
+    }
+
+    /**
+     * @return Пароль адреса электронной почты
+     */
+    public String getMailPassword() {
+        return mailPassword;
+    }
+
+    public void setMailPassword(String mailPassword) {
+        this.mailPassword = mailPassword;
+    }
+
+    /**
+     * @return Отправитель, от имени которого следует отправлять электронные письма
+     */
+    public String getEmailFrom() {
+        return emailFrom;
+    }
+
+    public void setEmailFrom(String emailFrom) {
+        this.emailFrom = emailFrom;
     }
 }

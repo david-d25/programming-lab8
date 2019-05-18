@@ -1,9 +1,11 @@
 package ru.david.room.json;
 
+import java.io.Serializable;
+
 /**
  * Инкапсулирует json-булев тип
  */
-public class JSONBoolean extends JSONEntity{
+public class JSONBoolean extends JSONEntity {
     private boolean value;
 
     {

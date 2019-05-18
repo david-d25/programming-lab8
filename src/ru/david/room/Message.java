@@ -12,6 +12,9 @@ public class Message implements Serializable {
     private Serializable attachment;
     private boolean endFlag;
 
+    private Integer token;
+    private Integer userid;
+
     /**
      * Создаёт сообщение с указанным текстовым запросом, объектом-приложением и флагом окончания
      * @param message текстовый запрос
@@ -85,5 +88,27 @@ public class Message implements Serializable {
      */
     public boolean hasEndFlag() {
         return endFlag;
+    }
+
+    /**
+     * @return токен пользователя для его аутентификации
+     */
+    public Integer getToken() {
+        return token;
+    }
+
+    public void setToken(Integer token) {
+        this.token = token;
+    }
+
+    /**
+     * @return идентификатор пользователя
+     */
+    public Integer getUserid() {
+        return userid;
+    }
+
+    public void setUserid(Integer userid) {
+        this.userid = userid;
     }
 }

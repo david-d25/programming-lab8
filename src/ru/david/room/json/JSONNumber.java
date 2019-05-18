@@ -14,12 +14,16 @@ public class JSONNumber extends JSONEntity {
      * Создаёт json-число по указанному значению
      * @param value значение числа
      */
-    JSONNumber(double value) {
+    public JSONNumber(double value) {
         this.value = value;
     }
 
     public double getValue() {
         return value;
+    }
+
+    public int toInt() {
+        return (int)value;
     }
 
     public void setValue(double value) {

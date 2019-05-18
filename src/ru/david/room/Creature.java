@@ -2,6 +2,7 @@ package ru.david.room;
 
 import java.text.SimpleDateFormat;
 import java.time.ZonedDateTime;
+import java.util.Date;
 import java.util.Objects;
 
 /**
@@ -55,6 +56,12 @@ public class Creature extends PhysicalObject implements Comparable<Creature> {
         this.name = name;
     }
 
+    public Creature(int x, int y, int width, int height, String name, ZonedDateTime created) {
+        super(x, y, width, height);
+        this.name = name;
+        this.created = created;
+    }
+
     /**
      * @return Имя существа
      */
@@ -95,7 +102,7 @@ public class Creature extends PhysicalObject implements Comparable<Creature> {
                 getY(),
                 getWidth(),
                 getHeight(),
-                new SimpleDateFormat("hh:mm aa, dd.MM.yyyy").format(created),
+                new SimpleDateFormat("hh:mm aa, dd.MM.yyyy").format(new Date(created.toInstant().getEpochSecond()*1000)),
                 name
         );
     }
