@@ -994,13 +994,8 @@ class ServerController {
         message.setFrom(config.getEmailFrom());
         message.setRecipient(Message.RecipientType.TO, new InternetAddress(to));
         message.setSubject(subject);
+        message.setContent(content, "text/html; charset=utf-8");
 
-        Multipart multipart = new MimeMultipart();
-        MimeBodyPart bodyPart = new MimeBodyPart();
-        bodyPart.setContent(content, "text/html; charset=utf-8");
-        multipart.addBodyPart(bodyPart);
-
-        message.setContent(multipart);
         Transport.send(message);
     }
 }
