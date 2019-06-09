@@ -1,24 +1,12 @@
 package ru.david.room.client;
 
-import static ru.david.room.GlobalConstants.*;
-
 /**
  * Генератор случайных фраз
  */
-class WelcomePhrases {
+public class WelcomePhrases {
     private static String[] phrases = {
             "Добро пожаловать, мой господин!",
             "Привет, салага! У меня есть годное дерьмо для тебя",
-            String.format(
-                    "%sПри%sвет%s сту%sден%sтам И%sТМО%s",
-                    ANSI_COLORS.RED,
-                    ANSI_COLORS.YELLOW,
-                    ANSI_COLORS.GREEN,
-                    ANSI_COLORS.CYAN,
-                    ANSI_COLORS.BLUE,
-                    ANSI_COLORS.PURPLE,
-                    ANSI_COLORS.RESET
-            ),
             "Сегодня отличная погода, не правда ли?",
             "Лишь глупцы называют своеволие свободой.\n  - Публий Корнелий Тацит",
             "— Ну, как посмотреть.\n" +
@@ -68,7 +56,7 @@ class WelcomePhrases {
     /**
      * @return Случайная фраза. Можно использовать во время запуска приложения.
      */
-    static String getRandom() {
+    public static String getRandom() {
         return phrases[(int)(Math.random()*phrases.length)];
     }
 }

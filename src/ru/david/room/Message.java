@@ -8,56 +8,34 @@ import java.io.Serializable;
  * и для решения проблемы с разделением команды и её объектов-аргументов
  */
 public class Message implements Serializable {
-    private String message;
+    private String text;
     private Serializable attachment;
-    private boolean endFlag;
 
     private Integer token;
     private Integer userid;
 
     /**
-     * Создаёт сообщение с указанным текстовым запросом, объектом-приложением и флагом окончания
-     * @param message текстовый запрос
-     * @param attachment объект-приложение, прикреплённый к сообщению
-     * @param endFlag флаг окончания
-     */
-    public Message(String message, Serializable attachment, boolean endFlag) {
-        this.message = message;
-        this.attachment = attachment;
-        this.endFlag = endFlag;
-    }
-
-    /**
      * Создаёт сообщение с указанным текстовым запросом и объектом-приложением
-     * @param message текстовый запрос
+     * @param text текстовый запрос
      * @param attachment объект-приложение, прикреплённый к сообщению
      */
-    public Message(String message, Serializable attachment) {
-        this(message, attachment, false);
+    public Message(String text, Serializable attachment) {
+        this.text = text;
+        this.attachment = attachment;
     }
-
-    /**
-     * Создаёт сообщение с указанным текстовым запросом и флагом окончания
-     * @param message текстовый запрос
-     * @param endFlag флаг окончания
-     */
-    public Message(String message, boolean endFlag) {
-        this(message, null, endFlag);
-    }
-
     /**
      * Создаёт сообщение с указанным текстовым запросом
-     * @param message текствый запрос
+     * @param text текствый запрос
      */
-    public Message(String message) {
-        this(message, null, false);
+    public Message(String text) {
+        this(text, null);
     }
 
     /**
      * @return текстовый запрос сообщения
      */
-    public String getMessage() {
-        return message;
+    public String getText() {
+        return text;
     }
 
     /**
@@ -81,13 +59,6 @@ public class Message implements Serializable {
      */
     public boolean hasAttachment() {
         return attachment != null;
-    }
-
-    /**
-     * @return true, если сообщение отмечено как последнее (если установлен флаг окончания)
-     */
-    public boolean hasEndFlag() {
-        return endFlag;
     }
 
     /**

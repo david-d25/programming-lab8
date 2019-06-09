@@ -6,25 +6,10 @@ import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import static ru.david.room.GlobalConstants.ANSI_COLORS.*;
+import static ru.david.room.GlobalConstants.ANSI_COLORS.RESET;
 
 public class Utils {
-    /**
-     * Возвращает красивую полосу прогресса
-     *
-     * @param progress прогресс от 0 до 1
-     *                 
-     * @return строка с красивой полосой прогресса
-     */
-    static String progressBar(float progress) {
-        return  "[" + Stream.generate(() ->  "=").limit(Math.round(25*progress)).collect(Collectors.joining()) + ">" +
-                Stream.generate(() -> " ").limit(Math.round(25*(1 - progress))).collect(Collectors.joining()) + "]" +
-                " " + Math.round(1000f * progress)/10f + "%\r";
-    }
-
     /**
      * Возвращает количество информации в читабельном виде.
      * Например, при входных данных 134217728, возвращает "128 МиБ"
@@ -62,6 +47,25 @@ public class Utils {
             result = false;
         }
         return result;
+    }
+
+    /**
+     * Превращает вот_такой_текст в ВотТакойТекст
+     * @param s исходный текст
+     * @return результат
+     */
+    public static String toCamelCase(String s){
+        String[] parts = s.split("_");
+        StringBuilder camelCaseString = new StringBuilder();
+        for (String part : parts){
+            camelCaseString.append(toProperCase(part));
+        }
+        return camelCaseString.toString();
+    }
+
+    private static String toProperCase(String s) {
+        return s.substring(0, 1).toUpperCase() +
+                s.substring(1).toLowerCase();
     }
 
     /**
@@ -129,34 +133,5 @@ public class Utils {
         } catch (IllegalAccessException e) {
             return source;
         }
-    }
-
-    public static String getLogo() {
-        StringBuilder result = new StringBuilder();
-        String raw =
-                "************#  ********************#  *******#            *******#       **********#\n" +
-                "************#  ********************#  ********#          ********#    ****************#\n" +
-                "####****#####          ****#########  *********#        *********#   *****########*****#\n" +
-                "    ****#              ****#          ****#*****#      *****#****#  *****#         *****#\n" +
-                "    ****#              ****#          ****# *****#    *****# ****#  ****#           ****#\n" +
-                "    ****#              ****#          ****#  *****#  *****#  ****#  ****#           ****#\n" +
-                "    ****#              ****#          ****#   ***********#   ****#  ****#           ****#\n" +
-                "    ****#              ****#          ****#    *********#    ****#  ****#           ****#\n" +
-                "    ****#              ****#          ****#     ########     ****#  *****#         *****#\n" +
-                "    ****#              ****#          ****#                  ****#   *****#       *****#\n" +
-                "************#          ****#          ****#                  ****#    ****************#\n" +
-                "************#          ****#          ****#                  ****#       **********###\n" +
-                "#############          #####          #####                  #####       ###########";
-        for (int i = 0; i < raw.length(); i++) {
-            if (raw.charAt(i) == '*')
-                result.append(BRIGHT_BLUE).append("#");
-            else if (raw.charAt(i) == '#')
-                result.append(BLUE).append("*");
-            else
-                result.append(RESET).append(raw.charAt(i));
-        }
-
-        result.append(RESET);
-        return result.toString();
     }
 }

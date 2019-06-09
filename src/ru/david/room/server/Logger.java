@@ -24,12 +24,12 @@ class Logger {
     }
 
     void err(String message) {
-        err.println(Utils.colorize("[[red]]" + generateLogTime() + "[ ОШИБКА ] " + message + "[[reset]]"));
+        err.println(Utils.colorize("[[red]]" + generateLogTime() + "[ ERROR ] " + message + "[[reset]]"));
         err.flush();
     }
 
     void warn(String message) {
-        err.println(Utils.colorize("[[yellow]]" + generateLogTime() + "[ ПРОБЛЕМА ] " + message + "[[reset]]"));
+        err.println(Utils.colorize("[[yellow]]" + generateLogTime() + "[ WARNING ] " + message + "[[reset]]"));
         err.flush();
     }
 

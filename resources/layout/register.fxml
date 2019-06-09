@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.VBox?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.paint.Color?>
+<Pane prefWidth="300" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1">
+    <TabPane  prefWidth="300" styleClass="tab-pane" fx:id="tabPane">
+        <Tab fx:id="registrationTab">
+            <VBox>
+                <Label alignment="CENTER" contentDisplay="CENTER" maxWidth="Infinity" text="%register-dialog.title" textAlignment="CENTER">
+                    <font>
+                        <Font size="35.0" />
+                    </font>
+                    <VBox.margin>
+                        <Insets bottom="20" left="20" right="20" top="20"/>
+                    </VBox.margin>
+                </Label>
+
+                <TextField promptText="%register-dialog.name-prompt" fx:id="nameInput" onKeyTyped="#onTextFieldKeyTyped">
+                    <VBox.margin>
+                        <Insets bottom="20" left="40" right="40" />
+                    </VBox.margin>
+                </TextField>
+
+                <TextField promptText="%register-dialog.email-prompt" fx:id="emailInput" onKeyTyped="#onTextFieldKeyTyped">
+                    <VBox.margin>
+                        <Insets bottom="20" left="40" right="40" />
+                    </VBox.margin>
+                </TextField>
+
+                <PasswordField promptText="%register-dialog.password-prompt" fx:id="passwordInput" onKeyTyped="#onTextFieldKeyTyped">
+                    <VBox.margin>
+                        <Insets bottom="20" left="40" right="40" />
+                    </VBox.margin>
+                </PasswordField>
+
+                <PasswordField promptText="%register-dialog.repeat-password-prompt" fx:id="repeatedPasswordInput" onKeyTyped="#onTextFieldKeyTyped">
+                    <VBox.margin>
+                        <Insets bottom="20" left="40" right="40" />
+                    </VBox.margin>
+                </PasswordField>
+
+                <HBox alignment="CENTER" spacing="10">
+                    <VBox.margin>
+                        <Insets bottom="20" />
+                    </VBox.margin>
+                    <Button defaultButton="true" fx:id="proceedButton" onAction="#onProceedClick" text="%register-dialog.proceed-button" />
+                    <Button fx:id="haveCodeButton" onAction="#onHaveCodeClick" text="%register-dialog.have-code-button" />
+                </HBox>
+            </VBox>
+        </Tab>
+        <Tab fx:id="confirmationTab">
+            <VBox>
+                <Label alignment="CENTER" contentDisplay="CENTER" maxWidth="Infinity" text="%register-dialog.confirmation-title" textAlignment="CENTER">
+                    <font>
+                        <Font size="35.0" />
+                    </font>
+                    <VBox.margin>
+                        <Insets bottom="20" left="20" right="20" top="20"/>
+                    </VBox.margin>
+                </Label>
+
+                <Label wrapText="true" fx:id="confirmationLabel" alignment="CENTER" contentDisplay="CENTER" maxWidth="Infinity" text="%register-dialog.confirmation-text" textAlignment="CENTER">
+                    <font>
+                        <Font size="14.0" />
+                    </font>
+                    <textFill>
+                        <Color red=".4" green=".4" blue=".4"/>
+                    </textFill>
+                    <VBox.margin>
+                        <Insets bottom="20" left="20" right="20"/>
+                    </VBox.margin>
+                </Label>
+
+                <TextField promptText="%register-dialog.confirmation-prompt" fx:id="confirmationInput" onKeyTyped="#onTextFieldKeyTyped">
+                    <VBox.margin>
+                        <Insets bottom="20" left="40" right="40" />
+                    </VBox.margin>
+                </TextField>
+
+                <HBox alignment="CENTER" spacing="10">
+                    <VBox.margin>
+                        <Insets bottom="20" />
+                    </VBox.margin>
+                    <Button defaultButton="true" fx:id="confirmButton" text="%register-dialog.confirm-button" onAction="#onConfirmClick"/>
+                    <Button visible="false" fx:id="cancelConfirmationButton" text="%register-dialog.cancel-confirmation-button" onAction="#onCancelConfirmationClick"/>
+                </HBox>
+            </VBox>
+        </Tab>
+    </TabPane>
+</Pane>

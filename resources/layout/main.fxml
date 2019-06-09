@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.canvas.Canvas?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.Circle?>
+<?import javafx.scene.text.Font?>
+<?import ru.david.room.client.main.CreaturesTable?>
+<?import ru.david.room.client.ui.UsersList?>
+<VBox prefHeight="400" prefWidth="640" styleClass="root" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1">
+    <HBox alignment="CENTER_LEFT">
+        <Circle fx:id="userColorCircle" radius="8">
+            <HBox.margin>
+                <Insets bottom="20" left="20" right="10" top="20" />
+            </HBox.margin>
+        </Circle>
+        <Label fx:id="userNameLabel">
+            <font>
+                <Font size="24" />
+            </font>
+        </Label>
+        <Label fx:id="creaturesCountLabel">
+            <font>
+                <Font size="24" />
+            </font>
+        </Label>
+    </HBox>
+    <GridPane alignment="CENTER" hgap="10.0" vgap="10.0" VBox.vgrow="ALWAYS">
+
+        <TabPane maxHeight="Infinity" maxWidth="Infinity" GridPane.columnSpan="2" GridPane.rowSpan="2">
+
+            <Tab closable="false" text="%main.table-tab-title">
+                <ScrollPane fitToWidth="true" fitToHeight="true">
+                    <CreaturesTable fx:id="creaturesTable"/>
+                </ScrollPane>
+            </Tab>
+            <Tab closable="false" text="%main.canvas-tab-title">
+                <Canvas />
+            </Tab>
+
+        </TabPane>
+
+        <VBox GridPane.columnIndex="2">
+            <Label text="%main.settings-pane-title" />
+        </VBox>
+
+        <VBox GridPane.columnIndex="2" GridPane.rowIndex="1">
+            <Label text="%main.users-pane-title" />
+            <ScrollPane VBox.vgrow="ALWAYS" style="-fx-background-color: #ffffff;">
+                <UsersList fx:id="usersList"/>
+            </ScrollPane>
+        </VBox>
+
+      <columnConstraints>
+         <ColumnConstraints hgrow="ALWAYS" />
+         <ColumnConstraints hgrow="ALWAYS" minWidth="10.0" prefWidth="100.0" />
+         <ColumnConstraints hgrow="ALWAYS" minWidth="10.0" prefWidth="100.0" />
+      </columnConstraints>
+      <rowConstraints>
+         <RowConstraints vgrow="ALWAYS" />
+         <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="ALWAYS" />
+      </rowConstraints>
+      <VBox.margin>
+         <Insets bottom="10.0" left="10.0" right="10.0" />
+      </VBox.margin>
+
+    </GridPane>
+</VBox>

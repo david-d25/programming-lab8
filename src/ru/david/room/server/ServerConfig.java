@@ -16,7 +16,6 @@ public class ServerConfig {
     private ServerConfig() {}
 
     private int port;
-    private int broadcastPort;
 
     private int maxRequestSize;
     private int maxLoggableRequestSize;
@@ -26,7 +25,6 @@ public class ServerConfig {
     private int databasePort;
 
     private String databaseName;
-    private String tableNamesPrefix;
 
     private String databaseUser;
     private String databasePassword;
@@ -75,10 +73,6 @@ public class ServerConfig {
                 "port",
                 "Порт не указан, укажите его в параметре 'port'"
         );
-        JSONEntity broadcastPortEntity = object.getItemNotNull(
-                "broadcast_port",
-                "Широковещательный порт не указан, укажите его в параметре 'broadcast_port'"
-        );
 
         JSONEntity maxRequestSizeEntity = object.getItemNotNull(
                 "max_request_size",
@@ -105,11 +99,6 @@ public class ServerConfig {
         JSONEntity databaseNameEntity = object.getItemNotNull(
                 "db_name",
                 "Имя базы данных не указано, укажите его в параметре 'db_name'"
-        );
-        JSONEntity tableNamesPrefixEntity = object.getItemNotNull(
-                "table_names_prefix",
-                "Префикс таблиц не указан, укажите его в параметре 'table_names_prefix'. " +
-                        "Если вы не хотите устанавливать префикс именам таблиц, укажите пустую строку."
         );
 
         JSONEntity databaseUserEntity = object.getItemNotNull(
@@ -186,11 +175,6 @@ public class ServerConfig {
                         "Проверьте значение параметра 'port'"
         ).getValue();
 
-        int broadcastPort = (int)broadcastPortEntity.toNumber(
-                "Широковещательный порт должен быть числом, но это " + broadcastPortEntity.getTypeName() + ".\n" +
-                        "Проверьте значение параметра 'broadcast_port'"
-        ).getValue();
-
         int maxRequestSize = (int)maxRequestSizeEntity.toNumber(
                 "Макс. размер запроса должен быть числом, но это " + maxRequestSizeEntity.getTypeName() + ".\n" +
                         "Проверьте значение параметра 'max_request_size'"
@@ -219,11 +203,6 @@ public class ServerConfig {
         String databaseName = databaseNameEntity.toString(
                 "Имя базы данных должно быть строкой, но это " + databaseNameEntity.getTypeName() + ".\n" +
                         "Проверьте значение параметра 'db_name'"
-        ).getContent();
-
-        String tableNamesPrefix = tableNamesPrefixEntity.toString(
-                "Префикс таблиц базы данных должен быть строкой, но это " + tableNamesPrefixEntity.getTypeName() + ".\n" +
-                        "Проверьте значение параметра 'table_names_prefix'"
         ).getContent();
 
         String databaseUser = databaseUserEntity.toString(
@@ -303,14 +282,12 @@ public class ServerConfig {
 
         // Setting variables
         result.setPort(port);
-        result.setBroadcastPort(broadcastPort);
         result.setMaxRequestSize(maxRequestSize);
         result.setMaxLoggableRequestSize(maxLoggableRequestSize);
         result.setMaxUserElements(maxUserElements);
         result.setDatabaseHost(databaseHost);
         result.setDatabasePort(databasePort);
         result.setDatabaseName(databaseName);
-        result.setTableNamesPrefix(tableNamesPrefix);
         result.setDatabaseUser(databaseUser);
         result.setDatabasePassword(databasePassword);
         result.setRegistrationTokenTimeout(registrationTokenTimeout);
@@ -346,24 +323,6 @@ public class ServerConfig {
         if (port < 1 || port > 65535)
             throw new IllegalArgumentException("Порт должен быть в пределах от 1 до 65535");
         this.port = port;
-    }
-
-    /**
-     * @return Широковещательный порт сервера
-     */
-    public int getBroadcastPort() {
-        return broadcastPort;
-    }
-
-    /**
-     * Устанавливает широковещательный порт, который следует слушать серверу.
-     * Порт должен находиться в пределах от 1 до 65535.
-     * @param port номер порта
-     */
-    public void setBroadcastPort(int port) {
-        if (port < 1 || port > 65535)
-            throw new IllegalArgumentException("Порт должен быть в пределах от 1 до 65535");
-        this.broadcastPort = port;
     }
 
     /**
@@ -440,17 +399,6 @@ public class ServerConfig {
 
     public void setDatabaseName(String databaseName) {
         this.databaseName = databaseName;
-    }
-
-    /**
-     * @return Префикс имён таблиц, используемых сервером
-     */
-    public String getTableNamesPrefix() {
-        return tableNamesPrefix;
-    }
-
-    public void setTableNamesPrefix(String tableNamesPrefix) {
-        this.tableNamesPrefix = tableNamesPrefix;
     }
 
     /**

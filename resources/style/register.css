@@ -1,0 +1,11 @@
+.register-textfield__error {
+  -fx-text-box-border: red;
+  -fx-focus-color: red;
+}
+
+.tab-pane {
+  -fx-tab-max-height: 0 ;
+}
+.tab-pane .tab-header-area {
+  visibility: hidden ;
+}

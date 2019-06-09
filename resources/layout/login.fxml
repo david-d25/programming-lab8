@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.TextFlow?>
+<VBox maxWidth="600" minWidth="300" xmlns="http://javafx.com/javafx/8.0.172-ea">
+    <ChoiceBox id="localesChoiceBox"/>
+
+    <HBox alignment="CENTER">
+        <ImageView id="image" fitHeight="75" onMouseClicked="#onWatermelonClick" preserveRatio="true" style="-fx-cursor: hand" />
+        <VBox.margin>
+            <Insets top="20" />
+        </VBox.margin>
+    </HBox>
+
+    <Label alignment="CENTER" contentDisplay="CENTER" maxWidth="Infinity" text="%login-dialog.title" textAlignment="CENTER">
+      <font>
+         <Font size="35" />
+      </font>
+        <VBox.margin>
+            <Insets bottom="20" left="20" right="20" />
+        </VBox.margin>
+    </Label>
+
+    <TextField promptText="Email" id="email-input" onKeyTyped="#onTextFieldKeyTyped">
+        <VBox.margin>
+            <Insets bottom="20" left="40" right="40" />
+        </VBox.margin>
+    </TextField>
+    <PasswordField promptText="%login-dialog.password-prompt" id="password-input" onKeyTyped="#onTextFieldKeyTyped">
+        <VBox.margin>
+            <Insets bottom="20" left="40" right="40" />
+        </VBox.margin>
+    </PasswordField>
+
+    <HBox alignment="CENTER" spacing="10">
+        <VBox.margin>
+            <Insets bottom="20" />
+        </VBox.margin>
+        <Button defaultButton="true" id="login-button" onAction="#onLoginClick" text="%login-dialog.login-button" />
+        <Button text="%login-dialog.register-button" onAction="#onRegisterClick" />
+    </HBox>
+
+    <TextFlow textAlignment="center">
+        <VBox.margin>
+            <Insets bottom="10" />
+        </VBox.margin>
+        <Hyperlink disable="true" text="%login-dialog.forgot-password" />
+    </TextFlow>
+</VBox>

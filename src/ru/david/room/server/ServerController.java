@@ -1,17 +1,17 @@
 package ru.david.room.server;
 
 import com.lambdaworks.crypto.SCrypt;
-import ru.david.room.Creature;
+import ru.david.room.CreatureModel;
 import ru.david.room.Utils;
 
 import javax.mail.*;
-import javax.mail.internet.*;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
 import java.security.GeneralSecurityException;
 import java.sql.*;
-import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.util.Arrays;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Properties;
@@ -20,85 +20,40 @@ import java.util.Properties;
  * Контроллер операций между сервером и внешним миром.
  * Позволяет выполнять обращения к базе данных и отправлять email-писем.
  */
-class ServerController {
+public class ServerController implements HubFriendly {
     private static byte[] PASSWORD_SALT = "Hg6trUBbHfgH7ggGV7yuv".getBytes();
 
+    private Hub hub;
     private ServerConfig config;
     private Logger logger;
     private Connection connection;
-    private BroadcastingController broadcastingController;
 
     private Session mailSession;
 
-    /**
-     * Инкапсулирует ответ от сервера при различных запросах
-     */
-    static class ServerResponse {
-        enum Registration {
-            OK, ADDRESS_ALREADY_REGISTERED,
-            INCORRECT_EMAIL, INCORRECT_NAME,
-            INCORRECT_PASSWORD, DB_NOT_SUPPORTED,
-            INTERNAL_ERROR, ADDRESS_IN_USE
-        }
-
-        static class Login {
-            enum ResponseType {
-                OK, WRONG_PASSWORD, DB_NOT_SUPPORTED, INTERNAL_ERROR
-            }
-            ResponseType responseType;
-            int token;
-            int userid;
-            String name;
-        }
-
-        enum AcceptRegistrationToken {
-            OK, WRONG_TOKEN, DB_NOT_SUPPORTED, INTERNAL_ERROR
-        }
-
-        enum ChangePassword {
-            OK, WRONG_TOKEN, WRONG_PASSWORD, INCORRECT_NEW_PASSWORD, DB_NOT_SUPPORTED, INTERNAL_ERROR
-        }
-
-        enum RequestPasswordReset {
-            OK, EMAIL_NOT_EXIST, DB_NOT_SUPPORTED, INTERNAL_ERROR
-        }
-
-        enum ResetPassword {
-            OK, WRONG_TOKEN, INCORRECT_PASSWORD, DB_NOT_SUPPORTED, INTERNAL_ERROR
-        }
-
-        enum AddCreature {
-            OK, NOT_ENOUGH_SPACE, NOT_AUTHORIZED, DB_NOT_SUPPORTED, INTERNAL_ERROR
-        }
-
-        static class RemoveCreature {
-            enum ResponseType {
-                OK, NOT_AUTHORIZED, DB_NOT_SUPPORTED, INTERNAL_ERROR
-            }
-            int updates;
-            ResponseType type;
-        }
+    @Override
+    public void onHubConnected(Hub hub) {
+        this.hub = hub;
     }
 
-    ServerController(ServerConfig c, Logger l) {
-        config = c;
-        logger = l;
+    @Override
+    public void onHubReady() {
+        config = hub.getConfig();
+        logger = hub.getLogger();
 
         try {
             Class.forName(config.getJdbcDriver());
         } catch (ClassNotFoundException | NullPointerException e) {
-            logger.warn(
-                    "Не удалось найти драйвер базы данных " + config.getJdbcDriver() + ". " +
-                    "Сервер будет работать, но не сможет выполнять некоторые команды."
+            logger.err(
+                    "Не удалось найти драйвер базы данных " + config.getJdbcDriver() + ", сервер будет остановлен"
             );
+            System.exit(1);
         }
 
         initConnection();
         if (connection != null)
             initTables();
         initEmail();
-
-        broadcastingController = new BroadcastingController(this, logger);
+        initAutoLogout();
     }
 
     /**
@@ -110,6 +65,7 @@ class ServerController {
         properties.put("mail.smtp.port", config.getSmtpPort());
         properties.put("mail.smtp.auth", "true");
         properties.put("mail.smtp.ssl.enable", config.isSmtpSSLEnabled());
+        properties.put("mail.mime.charset", "UTF-16");
         properties.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
 
         Authenticator mailAuth = new Authenticator() {
@@ -119,6 +75,39 @@ class ServerController {
             }
         };
         mailSession = Session.getDefaultInstance(properties, mailAuth);
+    }
+
+    private void initAutoLogout() {
+        new Thread(() -> {
+            try {
+                while (true) {
+                    PreparedStatement statement = connection.prepareStatement(
+                            "select * from user_tokens where expires < ?"
+                    );
+                    statement.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
+                    ResultSet resultSet = statement.executeQuery();
+
+                    statement = connection.prepareStatement(
+                            "delete from user_tokens where expires < ?"
+                    );
+                    statement.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
+                    statement.execute();
+
+                    while (resultSet.next()) {
+                        logger.log("Пользователь с id " + resultSet.getInt("userid") + " вышел по таймауту");
+                        hub.getClientPool().makeStrongStatement(
+                                new ru.david.room.Message(
+                                        "users_list_updated", generateOnlineUsersList()
+                                )
+                        );
+                    }
+                    Thread.sleep(3000);
+                }
+            } catch (InterruptedException ignored) {
+            } catch (SQLException e) {
+                logger.err("Во время автоматического удаления устаревших токенов произошла ошибка: " + e.toString());
+            }
+        }).start();
     }
 
     /**
@@ -149,17 +138,17 @@ class ServerController {
 
         autoCreateTable(
                 "creatures",
-                "id serial primary key not null, name text, x integer, y integer, width integer, height integer, ownerid integer, created timestamp"
+                "id serial primary key not null, name text, x integer, y integer, radius float, ownerid integer, created timestamp"
         );
 
         autoCreateTable(
                 "users",
-                "id serial primary key not null, name text, email text unique, password_hash bytea, registered timestamp"
+                "id serial primary key not null, name text, email text, password_hash blob, registered timestamp"
         );
 
         autoCreateTable(
                 "registration_tokens",
-                "token integer primary key not null, name text, email text unique, password_hash bytea, expires timestamp"
+                "token integer primary key not null, name text, email text, password_hash blob, expires timestamp"
         );
 
         autoCreateTable(
@@ -182,124 +171,26 @@ class ServerController {
      * @param structure описание структуры таблицы в sql-формате (имена колонн и их типы)
      */
     private void autoCreateTable(String name, String structure) {
-        String prefix = config.getTableNamesPrefix();
         try {
             DatabaseMetaData metaData = connection.getMetaData();
             if (
                     !metaData.getTables(
                             null,
                             null,
-                            prefix + name,
+                            name,
                             new String[]{"TABLE"}
                     ).next()
             ) {
-                connection.createStatement().execute("create table if not exists " + prefix + name +" (" + structure + ")");
-                logger.log("Создана таблица " + prefix + name);
+                connection.createStatement().execute("create table if not exists " + name +" (" + structure + ")");
+                logger.log("Создана таблица " + name);
             }
         } catch (SQLException e) {
             logger.err("Не получилось создать таблицу " + name + ": " + e.getMessage());
         }
     }
 
-    public BroadcastingController getBroadcastingController() {
-        return broadcastingController;
-    }
-
-    /**
-     * @return Информация о сервере в читабельном виде
-     */
-    String getInfo() {
-        if (connection == null)
-            return Utils.colorize("[[yellow]]Сервер не подключён к базе данных[[reset]]");
-        try {
-            ResultSet creaturesResult = connection.createStatement().executeQuery(
-                    "select count(*) from " + config.getTableNamesPrefix() + "creatures"
-            );
-
-            ResultSet usersResult = connection.createStatement().executeQuery(
-                    "select count(*) from " + config.getTableNamesPrefix() + "users"
-            );
-
-            ResultSet usersOnlineResult = connection.createStatement().executeQuery(
-                    "select count(*) from " + config.getTableNamesPrefix() + "user_tokens"
-            );
-
-            creaturesResult.next();
-            usersResult.next();
-            usersOnlineResult.next();
-
-            int creatures = creaturesResult.getInt(1);
-            int users = usersResult.getInt(1);
-            int usersOnline = usersOnlineResult.getInt(1);
-
-            return  Utils.getLogo() + "\n" +
-                    "Зарегистрировано пользователей: " + users + "\n" +
-                    "Сейчас онлайн: " + usersOnline + "\n" +
-                    "Создано существ: " + creatures;
-        } catch (SQLException e) {
-            logger.err("Во время выдачи информации произошла ошибка SQL: " + e.toString());
-            return Utils.colorize("[[red]]Возникла внутренняя ошибка сервера, обратитесь к администратору[[reset]]");
-        }
-    }
-
-    /**
-     * Предназначен для регистрации пользователей
-     *
-     * @param name Имя пользователя
-     *
-     * @param email EMail-адрес пользователя
-     *
-     * @param password пароль пользователя
-     *
-     * @return Результат регистрации
-     */
-    ServerResponse.Registration register(String name, String email, String password) {
-        if (name.length() < 2)
-            return ServerResponse.Registration.INCORRECT_NAME;
-        if (!Utils.isValidEmailAddress(email))
-            return ServerResponse.Registration.INCORRECT_EMAIL;
-        if (password.length() < 6 || Utils.isPasswordTooWeak(password))
-            return ServerResponse.Registration.INCORRECT_PASSWORD;
-        if (connection == null)
-            return ServerResponse.Registration.DB_NOT_SUPPORTED;
-
-        removeAllExpiredRegistrationTokens();
-
-        try {
-            PreparedStatement statement = connection.prepareStatement("select email from " + config.getTableNamesPrefix() + "users WHERE email = ?");
-            statement.setString(1, email);
-            if (statement.executeQuery().next())
-                return ServerResponse.Registration.ADDRESS_ALREADY_REGISTERED;
-
-            statement = connection.prepareStatement("select email from " + config.getTableNamesPrefix() + "registration_tokens WHERE email = ?");
-            statement.setString(1, email);
-            if (statement.executeQuery().next())
-                return ServerResponse.Registration.ADDRESS_IN_USE;
-
-            int token = generateRegistrationToken(name, email, password);
-
-            if (token == -1)
-                return ServerResponse.Registration.DB_NOT_SUPPORTED;
-
-            sendMail(email, "Подтверждение регистрации",
-                    "<p style=\"text-align: center; padding: 25px;\">" +
-                            "Ваш код подтверждения регистрации " +
-                            "<b style=\"padding: 12px; margin: 12px; background: antiquewhite; border-radius: 3px\">" + token + "</b></p>"
-            );
-
-            return ServerResponse.Registration.OK;
-        } catch (SQLException e) {
-            logger.err("Ошибка SQL: " + e.toString());
-            return ServerResponse.Registration.INTERNAL_ERROR;
-        } catch (AddressException e) {
-            return ServerResponse.Registration.INCORRECT_EMAIL;
-        } catch (MessagingException e) {
-            logger.err("Не получилось отправить сообщение: " + e.toString());
-            return ServerResponse.Registration.INTERNAL_ERROR;
-        } catch (GeneralSecurityException e) {
-            logger.err("Ошибка безопасности: " + e.toString());
-            return ServerResponse.Registration.INTERNAL_ERROR;
-        }
+    public Connection getConnection() {
+        return connection;
     }
 
     /**
@@ -320,7 +211,7 @@ class ServerController {
         }
 
         try {
-            PreparedStatement statement = connection.prepareStatement("select * from " + config.getTableNamesPrefix() + "users " +
+            PreparedStatement statement = connection.prepareStatement("select * from users " +
                     "where email = ? and password_hash = ?");
 
             statement.setString(1, email);
@@ -362,70 +253,22 @@ class ServerController {
             return;
         try {
             PreparedStatement statement = connection.prepareStatement(
-                    "delete from " + config.getTableNamesPrefix() + "user_tokens where userid = ? and token = ?"
+                    "delete from user_tokens where userid = ? and token = ?"
             );
             statement.setInt(1, userid);
             statement.setInt(2, token);
             if (statement.executeUpdate() != 0) {
                 statement = connection.prepareStatement(
-                        "select name from " + config.getTableNamesPrefix() + "users where id = ?"
+                        "select name from users where id = ?"
                 );
                 statement.setInt(1, userid);
                 ResultSet resultSet = statement.executeQuery();
-                if (resultSet.next())
-                    broadcastingController.userLoggedOut(userid, resultSet.getString("name"));
+//                if (resultSet.next())
+//                    broadcastingController.userLoggedOut(userid, resultSet.getString("name"));
+                // TODO: user logged out
             }
         } catch (SQLException e) {
             logger.err("Во время выхода пользователя произошла ошибка SQL: " + e.toString());
-        }
-    }
-
-    /**
-     * Предназначен для подтверждения регистрации пользователя
-     *
-     * @param token токен, отправленный на email
-     *
-     * @return результат подтверждения регистрации
-     */
-    ServerResponse.AcceptRegistrationToken acceptRegistrationToken(Integer token) {
-        try {
-            if (connection == null)
-                return ServerResponse.AcceptRegistrationToken.DB_NOT_SUPPORTED;
-            if (token == null)
-                return ServerResponse.AcceptRegistrationToken.WRONG_TOKEN;
-
-            removeAllExpiredRegistrationTokens();
-
-            PreparedStatement statement = connection.prepareStatement(
-                        "select * from " + config.getTableNamesPrefix() +
-                            "registration_tokens where token = ?"
-            );
-            statement.setInt(1, token);
-            ResultSet result = statement.executeQuery();
-            if (result.next()) {
-                String name = result.getString("name");
-                String email = result.getString("email");
-                byte[] passwordHash = result.getBytes("password_hash");
-                Timestamp registered = new Timestamp(System.currentTimeMillis());
-
-                removeRegistrationToken(token);
-
-                statement = connection.prepareStatement("insert into " + config.getTableNamesPrefix() + "users " +
-                "(name, email, password_hash, registered) values (?, ?, ?, ?)");
-
-                statement.setString(1, name);
-                statement.setString(2, email);
-                statement.setBytes(3, passwordHash);
-                statement.setTimestamp(4, registered);
-
-                statement.execute();
-
-                return ServerResponse.AcceptRegistrationToken.OK;
-            }
-            return ServerResponse.AcceptRegistrationToken.WRONG_TOKEN;
-        } catch (SQLException e) {
-            logger.err("Ошибка SQL: " + e.toString());
-            return ServerResponse.AcceptRegistrationToken.INTERNAL_ERROR;
         }
     }
 
@@ -438,11 +281,11 @@ class ServerController {
      *
      * @return созданный токен
      */
-    private int generateUserToken(int userid, String name) throws SQLException {
+    public int generateUserToken(int userid, String name) throws SQLException {
         if (connection == null)
             return -1;
         PreparedStatement statement = connection.prepareStatement(
-                "select * from " + config.getTableNamesPrefix() + "user_tokens where userid = ? and expires > ?"
+                "select * from user_tokens where userid = ? and expires > ?"
         );
         statement.setInt(1, userid);
         statement.setTimestamp(2, new Timestamp(System.currentTimeMillis()));
@@ -454,14 +297,14 @@ class ServerController {
             return token;
         } else {
             statement = connection.prepareStatement(
-                    "insert into " + config.getTableNamesPrefix() + "user_tokens values (?, ?, ?)"
+                    "insert into user_tokens values (?, ?, ?, ?)"
             );
             int token = generateRandomToken(6);
             statement.setInt(1, token);
             statement.setInt(2, userid);
             statement.setTimestamp(3, new Timestamp(System.currentTimeMillis() + config.getUserTokenTimeout()));
+            statement.setInt(4, (int)(0x1000000*Math.random()));
             statement.execute();
-            broadcastingController.userLoggedIn(userid, name);
             return token;
         }
     }
@@ -479,7 +322,7 @@ class ServerController {
         if (connection == null)
             return;
         PreparedStatement statement = connection.prepareStatement(
-                "update " + config.getTableNamesPrefix() + "user_tokens set expires = ? where userid = ? and token = ?"
+                "update user_tokens set expires = ? where userid = ? and token = ?"
         );
         statement.setTimestamp(1, new Timestamp(System.currentTimeMillis() + config.getUserTokenTimeout()));
         statement.setInt(2, userid);
@@ -499,46 +342,38 @@ class ServerController {
         if (connection == null)
             return;
         PreparedStatement statement = connection.prepareStatement(
-                "delete from " + config.getTableNamesPrefix() + "user_tokens where userid = ? and token = ?"
+                "delete from user_tokens where userid = ? and token = ?"
         );
         statement.setInt(1, userid);
         statement.setInt(2, token);
         statement.execute();
     }
 
-    Creature[] showCreatures(Integer userid) {
+    CreatureModel[] showCreatures(Integer userid) {
         if (connection == null)
-            return new Creature[0];
-        List<Creature> creatures = new LinkedList<>();
+            return new CreatureModel[0];
+        List<CreatureModel> creatureModels = new LinkedList<>();
         try {
             PreparedStatement statement;
             if (userid != null) {
                 statement = connection.prepareStatement(
-                        "select * from " + config.getTableNamesPrefix() + "creatures where " +
+                        "select * from creatures where " +
                                 "ownerid = ?");
                 statement.setInt(1, userid);
             } else {
                 statement = connection.prepareStatement(
-                        "select * from " + config.getTableNamesPrefix() + "creatures");
+                        "select * from creatures");
             }
 
             ResultSet resultSet = statement.executeQuery();
-            while (resultSet.next()) {
-                creatures.add(new Creature(
-                        resultSet.getInt("x"),
-                        resultSet.getInt("y"),
-                        resultSet.getInt("width"),
-                        resultSet.getInt("height"),
-                        resultSet.getString("name"),
-                        ZonedDateTime.ofInstant(resultSet.getTimestamp("created").toInstant(), ZoneId.systemDefault())
-                ));
-            }
-            Creature[] c = new Creature[0];
-            return creatures.toArray(c);
+            while (resultSet.next())
+                creatureModels.add(CreatureModel.fromResultSet(resultSet));
+            CreatureModel[] c = new CreatureModel[0];
+            return creatureModels.toArray(c);
         } catch (SQLException e) {
             logger.err("Во время показа существ произошла ошибка SQL: " + e.toString());
         }
-        return new Creature[0];
+        return new CreatureModel[0];
     }
 
     /**
@@ -546,8 +381,8 @@ class ServerController {
      *
      * @param token токен, который надо удалить
      */
-    private void removeRegistrationToken(int token) throws SQLException {
-        connection.createStatement().execute("delete from " + config.getTableNamesPrefix() + "registration_tokens " +
+    public void removeRegistrationToken(String token) throws SQLException {
+        connection.createStatement().execute("delete from registration_tokens " +
                 "where token = " + token);
     }
 
@@ -555,12 +390,12 @@ class ServerController {
      * Удаляет из базы данных все устаревшие токены регистрации.
      * Если нет соединения с базой данных, ничего не делает.
      */
-    private void removeAllExpiredRegistrationTokens() {
+    public void removeAllExpiredRegistrationTokens() {
         if (connection == null)
             return;
         try {
             PreparedStatement statement = connection.prepareStatement(
-                    "delete from " + config.getTableNamesPrefix() + "registration_tokens " +
+                    "delete from registration_tokens " +
                             "where expires < ?"
             );
             statement.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
@@ -579,7 +414,7 @@ class ServerController {
             return;
         try {
             PreparedStatement statement = connection.prepareStatement(
-                    "delete from " + config.getTableNamesPrefix() + "password_reset_tokens  " +
+                    "delete from password_reset_tokens  " +
                             "where expires < ?"
             );
             statement.setTimestamp(1, new Timestamp(System.currentTimeMillis()));
@@ -609,7 +444,7 @@ class ServerController {
         try {
             if (isUserAuthorized(userid, token, true)) {
                 PreparedStatement statement = connection.prepareStatement(
-                        "select * from " + config.getTableNamesPrefix() + "users where id = ? and password_hash = ?"
+                        "select * from users where id = ? and password_hash = ?"
                 );
 
                 if (newPassword.length() < 6 || Utils.isPasswordTooWeak(newPassword))
@@ -620,7 +455,7 @@ class ServerController {
                 ResultSet resultSet = statement.executeQuery();
                 if (resultSet.next()) {
                     statement = connection.prepareStatement(
-                            "update " + config.getTableNamesPrefix() + "users set password_hash = ? where id = ?"
+                            "update users set password_hash = ? where id = ?"
                     );
                     statement.setBytes(1, hashPassword(newPassword));
                     statement.setInt(2, userid);
@@ -654,7 +489,7 @@ class ServerController {
 
         try {
             PreparedStatement emailCheckingStatement = connection.prepareStatement(
-                    "select * from " + config.getTableNamesPrefix() + "users where email = ?"
+                    "select * from users where email = ?"
             );
             emailCheckingStatement.setString(1, email);
             ResultSet users = emailCheckingStatement.executeQuery();
@@ -698,7 +533,7 @@ class ServerController {
 
         try {
             PreparedStatement statement = connection.prepareStatement(
-                    "select * from " + config.getTableNamesPrefix() + "password_reset_tokens where token = ? and userid = ?"
+                    "select * from password_reset_tokens where token = ? and userid = ?"
             );
 
             if (Utils.isPasswordTooWeak(newPassword) || newPassword.length() < 6)
@@ -709,14 +544,14 @@ class ServerController {
             ResultSet resultSet = statement.executeQuery();
             if (resultSet.next()) {
                 statement = connection.prepareStatement(
-                        "update " + config.getTableNamesPrefix() + "users set password_hash = ? where id = ?"
+                        "update users set password_hash = ? where id = ?"
                 );
                 statement.setBytes(1, hashPassword(newPassword));
                 statement.setInt(2, userid);
                 statement.execute();
 
                 statement = connection.prepareStatement(
-                        "delete from " + config.getTableNamesPrefix() + "password_reset_tokens where token = ? and userid = ?"
+                        "delete from password_reset_tokens where token = ? and userid = ?"
                 );
                 statement.setInt(1, token);
                 statement.setInt(2, userid);
@@ -733,87 +568,91 @@ class ServerController {
         }
     }
 
-    ServerResponse.RemoveCreature removeCreature(Creature creature, int userid, int token) {
-        ServerResponse.RemoveCreature result = new ServerResponse.RemoveCreature();
-        if (connection == null) {
-            result.type = ServerResponse.RemoveCreature.ResponseType.DB_NOT_SUPPORTED;
-            return result;
-        }
-        String name = creature.getName();
-        int x = creature.getX();
-        int y = creature.getY();
-        int width  = creature.getWidth();
-        int height = creature.getHeight();
-        try {
-            if (isUserAuthorized(userid, token, true)) {
-                PreparedStatement statement = connection.prepareStatement(
-                        "delete from " + config.getTableNamesPrefix() + "creatures where " +
-                                "name = ? and x = ? and y = ? and width = ? and height = ? and " +
-                                "ownerid = ?"
-                );
-                statement.setString(1, name);
-                statement.setInt(2, x);
-                statement.setInt(3, y);
-                statement.setInt(4, width);
-                statement.setInt(5, height);
-                statement.setInt(6, userid);
-                int updates = statement.executeUpdate();
-                result.type = ServerResponse.RemoveCreature.ResponseType.OK;
-                result.updates = updates;
-                return result;
-
-            } else {
-                result.type = ServerResponse.RemoveCreature.ResponseType.NOT_AUTHORIZED;
-                return result;
-            }
-        } catch (SQLException e) {
-            logger.err("Произошла ошибка SQL при удалении существа: " + e.toString());
-            result.type = ServerResponse.RemoveCreature.ResponseType.INTERNAL_ERROR;
-            return result;
-        }
+    ServerResponse.RemoveCreature removeCreature(CreatureModel creatureModel, int userid, int token) {
+//        ServerResponse.RemoveCreature result = new ServerResponse.RemoveCreature();
+//        if (connection == null) {
+//            result.type = ServerResponse.RemoveCreature.ResponseType.DB_NOT_SUPPORTED;
+//            return result;
+//        }
+//        String name = creatureModel.getName();
+//        int x = creatureModel.getX();
+//        int y = creatureModel.getY();
+//        int width  = creatureModel.getWidth();
+//        int height = creatureModel.getHeight();
+//        try {
+//            if (isUserAuthorized(userid, token, true)) {
+//                PreparedStatement statement = connection.prepareStatement(
+//                        "delete from creatures where " +
+//                                "name = ? and x = ? and y = ? and width = ? and height = ? and " +
+//                                "ownerid = ?"
+//                );
+//                statement.setString(1, name);
+//                statement.setInt(2, x);
+//                statement.setInt(3, y);
+//                statement.setInt(4, width);
+//                statement.setInt(5, height);
+//                statement.setInt(6, userid);
+//                int updates = statement.executeUpdate();
+//                result.type = ServerResponse.RemoveCreature.ResponseType.OK;
+//                result.updates = updates;
+//                return result;
+//
+//            } else {
+//                result.type = ServerResponse.RemoveCreature.ResponseType.NOT_AUTHORIZED;
+//                return result;
+//            }
+//        } catch (SQLException e) {
+//            logger.err("Произошла ошибка SQL при удалении существа: " + e.toString());
+//            result.type = ServerResponse.RemoveCreature.ResponseType.INTERNAL_ERROR;
+//            return result;
+//        }
+        return null;
+        // TODO
     }
 
-    ServerResponse.AddCreature addCreature(Creature creature, Integer userid, Integer token) {
-        if (connection == null)
-            return ServerResponse.AddCreature.DB_NOT_SUPPORTED;
-        if (userid == null || token == null)
-            return ServerResponse.AddCreature.NOT_AUTHORIZED;
-        String name = creature.getName();
-        int x = creature.getX();
-        int y = creature.getY();
-        int width  = creature.getWidth();
-        int height = creature.getHeight();
-        Timestamp created = new Timestamp(1000L*creature.getCreated().toEpochSecond());
-        try {
-            if (isUserAuthorized(userid, token, true)) {
-                PreparedStatement statement = connection.prepareStatement(
-                        "select count(*) from " + config.getTableNamesPrefix() + "creatures where ownerid = ?"
-                );
-                statement.setInt(1, userid);
-                ResultSet resultSet = statement.executeQuery();
-                if (resultSet.next() && resultSet.getInt(1) >= config.getMaxUserElements())
-                    return ServerResponse.AddCreature.NOT_ENOUGH_SPACE;
-
-                statement = connection.prepareStatement(
-                        "insert into " + config.getTableNamesPrefix() + "creatures " +
-                                "(name, x, y, width, height, ownerid, created) " +
-                                "values (?, ?, ?, ?, ?, ?, ?)"
-                );
-                statement.setString(1, name);
-                statement.setInt(2, x);
-                statement.setInt(3, y);
-                statement.setInt(4, width);
-                statement.setInt(5, height);
-                statement.setInt(6, userid);
-                statement.setTimestamp(7, created);
-                statement.execute();
-                return ServerResponse.AddCreature.OK;
-            } else
-                return ServerResponse.AddCreature.NOT_AUTHORIZED;
-        } catch (SQLException e) {
-            logger.err("Произошла ошибка SQL при добавлении существа: " + e.toString());
-            return ServerResponse.AddCreature.INTERNAL_ERROR;
-        }
+    ServerResponse.AddCreature addCreature(CreatureModel creatureModel, Integer userid, Integer token) {
+//        if (connection == null)
+//            return ServerResponse.AddCreature.DB_NOT_SUPPORTED;
+//        if (userid == null || token == null)
+//            return ServerResponse.AddCreature.NOT_AUTHORIZED;
+//        String name = creatureModel.getName();
+//        int x = creatureModel.getX();
+//        int y = creatureModel.getY();
+//        int width  = creatureModel.getWidth();
+//        int height = creatureModel.getHeight();
+//        Timestamp created = new Timestamp(1000L* creatureModel.getCreated().toEpochSecond());
+//        try {
+//            if (isUserAuthorized(userid, token, true)) {
+//                PreparedStatement statement = connection.prepareStatement(
+//                        "select count(*) from creatures where ownerid = ?"
+//                );
+//                statement.setInt(1, userid);
+//                ResultSet resultSet = statement.executeQuery();
+//                if (resultSet.next() && resultSet.getInt(1) >= config.getMaxUserElements())
+//                    return ServerResponse.AddCreature.NOT_ENOUGH_SPACE;
+//
+//                statement = connection.prepareStatement(
+//                        "insert into creatures " +
+//                                "(name, x, y, width, height, ownerid, created) " +
+//                                "values (?, ?, ?, ?, ?, ?, ?)"
+//                );
+//                statement.setString(1, name);
+//                statement.setInt(2, x);
+//                statement.setInt(3, y);
+//                statement.setInt(4, width);
+//                statement.setInt(5, height);
+//                statement.setInt(6, userid);
+//                statement.setTimestamp(7, created);
+//                statement.execute();
+//                return ServerResponse.AddCreature.OK;
+//            } else
+//                return ServerResponse.AddCreature.NOT_AUTHORIZED;
+//        } catch (SQLException e) {
+//            logger.err("Произошла ошибка SQL при добавлении существа: " + e.toString());
+//            return ServerResponse.AddCreature.INTERNAL_ERROR;
+//        }
+        return null;
+        // TODO
     }
 
     /**
@@ -830,11 +669,11 @@ class ServerController {
      *
      * @return true, если пользователь авторизован
      */
-    private boolean isUserAuthorized(int userId, int token, boolean updateToken) throws SQLException {
+    public boolean isUserAuthorized(int userId, int token, boolean updateToken) throws SQLException {
         if (connection == null)
             return false;
         PreparedStatement statement = connection.prepareStatement(
-                "select * from " + config.getTableNamesPrefix() + "user_tokens where userid = ? and token = ?"
+                "select * from user_tokens where userid = ? and token = ?"
         );
         statement.setInt(1, userId);
         statement.setInt(2, token);
@@ -852,9 +691,23 @@ class ServerController {
         return false;
     }
 
-    // TODO: Add & Remove & Remove_greater & Remove_less & Remove_all
-    // TODO: Subscribe_to_changes
-    // TODO: Unsubscribe_from_changes
+    public HashSet<Properties> generateOnlineUsersList() throws SQLException {
+        ResultSet resultSet = connection.createStatement().executeQuery("" +
+                "select * from user_tokens inner join users on users.id = user_tokens.userid"
+        );
+        HashSet<Properties> result = new HashSet<>();
+
+        while (resultSet.next()) {
+            Properties properties = new Properties();
+
+            properties.setProperty("id", resultSet.getString("id"));
+            properties.setProperty("name", resultSet.getString("name"));
+            properties.setProperty("color", String.format("#%06x", resultSet.getInt("color888")));
+
+            result.add(properties);
+        }
+        return result;
+    }
 
     /**
      * Генерирует код для сброса пароля и сохраняет в базу данных. Если такой код уже есть,
@@ -869,27 +722,22 @@ class ServerController {
      *
      * @throws SQLException если что-то пойдёт не так
      */
-    private int generatePasswordResetToken(int userid) throws SQLException {
-        if (connection == null)
-            return -1;
-
+    public int generatePasswordResetToken(int userid) throws SQLException {
         PreparedStatement statement = connection.prepareStatement(
-                "select * from " + config.getTableNamesPrefix() + "password_reset_tokens where userid = ?"
+                "select * from password_reset_tokens where userid = ?"
         );
         statement.setInt(1, userid);
         ResultSet resultSet = statement.executeQuery();
         if (resultSet.next()) {
             statement = connection.prepareStatement(
-                    "update " + config.getTableNamesPrefix() + "password_reset_tokens set expires = ?"
+                    "update password_reset_tokens set expires = ?"
             );
             statement.setTimestamp(1, new Timestamp(System.currentTimeMillis() + config.getPasswordResetTokenTimeout()));
             statement.execute();
             return resultSet.getInt("token");
         } else {
             statement = connection.prepareStatement(
-                    "insert into " +
-                            config.getTableNamesPrefix() +
-                            "password_reset_tokens VALUES (?, ?, ?)"
+                    "insert into password_reset_tokens VALUES (?, ?, ?)"
             );
             int token = generateRandomToken(6);
             statement.setInt(1, token);
@@ -913,14 +761,9 @@ class ServerController {
      * @throws SQLException Если что-то пойдёт не так
      * @throws GeneralSecurityException Если что-то совсем пойдёт не так
      */
-    private int generateRegistrationToken(String name, String email, String password) throws SQLException, GeneralSecurityException {
-        if (connection == null)
-            return -1;
-
+    public int generateRegistrationToken(String name, String email, String password) throws SQLException, GeneralSecurityException {
         PreparedStatement statement = connection.prepareStatement(
-                "insert into " +
-                        config.getTableNamesPrefix() +
-                        "registration_tokens VALUES (?, ?, ?, ?, ?)"
+                "insert into registration_tokens VALUES (?, ?, ?, ?, ?)"
         );
         int token = generateRandomToken(6);
         statement.setInt(1, token);
@@ -955,27 +798,8 @@ class ServerController {
      *
      * @throws GeneralSecurityException Если что-то пойдёт совсем не так
      */
-    private byte[] hashPassword(String password) throws GeneralSecurityException {
+    public byte[] hashPassword(String password) throws GeneralSecurityException {
         return SCrypt.scrypt(password.getBytes(), PASSWORD_SALT, 16384, 8, 1, 32);
-    }
-
-    /**
-     * Проверяет правильность солёного пароля
-     *
-     * @param password пароль для проверки
-     *
-     * @param hash хеш, с которым должен сверяться пароль
-     *
-     *  @return true, если хеш пароля и проверочный хеш совпадают
-     *
-     * @throws GeneralSecurityException Если что-то пойдёт совсем не так
-     */
-    private boolean checkPassword(String password, byte[] hash) throws GeneralSecurityException {
-        return Arrays.equals(SCrypt.scrypt(password.getBytes(), PASSWORD_SALT, 16384, 8, 1, 32), hash);
-    }
-
-    public Connection getConnection() {
-        return connection;
     }
 
     /**
@@ -989,12 +813,12 @@ class ServerController {
      *
      * @throws MessagingException Если что-то пойдёт не так
      */
-    private void sendMail(String to, String subject, String content) throws MessagingException {
+    public void sendMail(String to, String subject, String content) throws MessagingException {
         MimeMessage message = new MimeMessage(mailSession);
         message.setFrom(config.getEmailFrom());
         message.setRecipient(Message.RecipientType.TO, new InternetAddress(to));
-        message.setSubject(subject);
-        message.setContent(content, "text/html; charset=utf-8");
+//        message.setSubject(subject, "UTF16");
+        message.setContent(content, "text/html; charset=utf-16");
 
         Transport.send(message);
     }
