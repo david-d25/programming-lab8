@@ -9,8 +9,6 @@ import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 import java.security.GeneralSecurityException;
 import java.sql.*;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -143,7 +141,7 @@ public class ServerController implements HubFriendly {
 
         autoCreateTable(
                 "users",
-                "id serial primary key not null, name text, email text, password_hash blob, registered timestamp"
+                "id serial primary key not null, name text, email text, color888 integer, password_hash blob, registered timestamp"
         );
 
         autoCreateTable(
@@ -297,13 +295,12 @@ public class ServerController implements HubFriendly {
             return token;
         } else {
             statement = connection.prepareStatement(
-                    "insert into user_tokens values (?, ?, ?, ?)"
+                    "insert into user_tokens values (?, ?, ?)"
             );
             int token = generateRandomToken(6);
             statement.setInt(1, token);
             statement.setInt(2, userid);
             statement.setTimestamp(3, new Timestamp(System.currentTimeMillis() + config.getUserTokenTimeout()));
-            statement.setInt(4, (int)(0x1000000*Math.random()));
             statement.execute();
             return token;
         }
