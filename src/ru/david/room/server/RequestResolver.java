@@ -85,7 +85,10 @@ public class RequestResolver implements HubFriendly {
                     logger.err("Произошла ошибка отправки электронного письма при выполнении команды " + command + ":\n" + e.toString());
                     response = new Message("INTERNAL_ERROR");
                 } finally {
-                    out.writeObject(response);
+                    synchronized (connector) {
+                        if (response != null)
+                            out.writeObject(response);
+                    }
                 }
             } catch (IOException | NullPointerException e) {
                 logger.warn("Не получилось отправить ответ: " + e.toString());
