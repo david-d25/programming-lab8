@@ -15,6 +15,7 @@ import ru.david.room.Message;
 import ru.david.room.client.Client;
 import ru.david.room.client.WelcomePhrases;
 import ru.david.room.client.registration.RegisterDialog;
+import ru.david.room.client.settings.SettingsDialog;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -39,6 +40,7 @@ public class LoginDialog {
     private Button loginButton;
 
     public LoginDialog(LoginDialogListener l) {
+        Client.setSocket(null);
         listener = l;
 
         stage = new Stage();
@@ -78,41 +80,29 @@ public class LoginDialog {
                 imageView.setImage(new Image(imageStream));
             }
 
-            @SuppressWarnings("unchecked")
-            ChoiceBox<Locale> localeChoiceBox = (ChoiceBox<Locale>)root.lookup("#localesChoiceBox");
-            localeChoiceBox.setConverter(new StringConverter<Locale>() {
-                @Override
-                public String toString(Locale object) {
-                    return object.getDisplayLanguage() + " (" + object.getDisplayCountry() + ")";
-                }
 
-                @Override
-                public Locale fromString(String string) {
-                    return null;
-                }
-            });
-            Map<Locale, ResourceBundle> bundles = Client.getResourceBundles();
-            localeChoiceBox.setValue(Client.getCurrentLocale());
-            for (Locale currentLocale : bundles.keySet())
-                localeChoiceBox.getItems().add(currentLocale);
-
-            localeChoiceBox.setOnAction(event -> {
-                Client.setCurrentLocale(localeChoiceBox.getValue());
-                loadView();
-            });
 
             emailField.setText(emailTextBackup);
             passwordField.setText(passwordTextBackup);
 
             emailField.requestFocus();
         } catch (Exception e) {
-            e.printStackTrace();
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle(bundle.getString("login-dialog.error-alert-title"));
             alert.setHeaderText(bundle.getString("login-dialog.error-alert-header"));
             alert.setContentText(e.toString());
             alert.show();
         }
+    }
+
+    @FXML
+    public void onSettingsClicked() {
+        new SettingsDialog((changed) -> {
+            if (changed)
+                loadView();
+            stage.show();
+        });
+        stage.hide();
     }
 
     @FXML
