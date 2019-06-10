@@ -2,8 +2,10 @@ package ru.david.room.client.main;
 
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
@@ -16,17 +18,19 @@ import ru.david.room.CreatureModel;
 import ru.david.room.Message;
 import ru.david.room.client.Client;
 import ru.david.room.client.login.LoginDialog;
+import ru.david.room.client.settings.SettingsDialog;
 import ru.david.room.client.ui.UsersList;
 
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.net.SocketException;
 import java.util.HashSet;
 import java.util.Properties;
 import java.util.ResourceBundle;
 import java.util.Set;
 
+/**
+ * Основное окно приложения
+ */
 @SuppressWarnings("unused")
 public class MainWindow extends Application {
     private Stage stage;
@@ -39,6 +43,8 @@ public class MainWindow extends Application {
 
     private ObjectInputStream in;
     private ObjectOutputStream out;
+
+    private Thread receivingThread;
 
     @FXML private Circle userColorCircle;
     @FXML private Label userNameLabel;
@@ -67,13 +73,22 @@ public class MainWindow extends Application {
             loadView();
             stage.show();
 
-            Thread receivingThread = new Thread(() -> {
+            receivingThread = new Thread(() -> {
                 try {
                     sendMessage("subscribe");
                     sendMessage("request_users");
                     sendMessage("request_creatures");
-                    while (true)
-                        onMessageReceived((Message) in.readObject());
+                    while (true) {
+                        Message incoming = (Message) in.readObject();
+                        if (incoming.getText().equals("disconnected")) {
+                            Platform.runLater(() -> {
+                                stage.close();
+                                promptLogin();
+                            });
+                            break;
+                        }
+                        onMessageReceived(incoming);
+                    }
                 } catch (Exception e) {
                     onMessageReceivingException(e);
                 }
@@ -85,6 +100,14 @@ public class MainWindow extends Application {
 
     private void loadView() {
         ResourceBundle bundle = Client.currentResourceBundle();
+
+        ObservableList<CreatureModel> creatureModels = null;
+        ObservableList<Node> usersListChildren = null;
+
+        if (creaturesTable != null && usersList != null) {
+            creatureModels = creaturesTable.getItems();
+            usersListChildren = usersList.getChildren();
+        }
 
         try {
             FXMLLoader loader = new FXMLLoader();
@@ -102,9 +125,17 @@ public class MainWindow extends Application {
 
             stage.getScene().getStylesheets().add("/style/main.css");
 
-            stage.setOnCloseRequest((e) -> sendMessage("logout"));
+            stage.setOnCloseRequest((e) -> {
+                sendMessage("logout");
+                sendMessage("disconnect");
+            });
+
+            if (creatureModels != null && usersListChildren != null) {
+                creaturesTable.setItems(creatureModels);
+                usersList.getChildren().setAll(usersListChildren);
+            }
         } catch (Exception e) {
-            e.printStackTrace();
+//            e.printStackTrace();
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle(bundle.getString("login-dialog.error-alert-title"));
             alert.setHeaderText(bundle.getString("login-dialog.error-alert-header"));
@@ -115,8 +146,12 @@ public class MainWindow extends Application {
     }
 
     private void sendMessage(String message) {
+        sendMessage(message, null);
+    }
+
+    private void sendMessage(String message, Serializable attachment) {
         try {
-            Message request = new Message(message);
+            Message request = new Message(message, attachment);
             request.setUserid(userid);
             request.setToken(token);
             out.writeObject(request);
@@ -128,11 +163,6 @@ public class MainWindow extends Application {
     private void onMessageReceived(Message message) {
         System.out.println(message.getText());
         switch (message.getText()) {
-            case "disconnect":
-                stage.close();
-                new Alert(Alert.AlertType.INFORMATION, Client.currentResourceBundle().getString("main.you-are-disconnected")).show();
-                break;
-
             case "users_list_updated":
                 @SuppressWarnings("unchecked")
                 Set<Properties> users = (Set<Properties>)message.getAttachment();
@@ -152,6 +182,7 @@ public class MainWindow extends Application {
                     }
 
                     if (thisUserIsLoggedOut) {
+                        sendMessage("disconnect");
                         stage.close();
                         promptLogin();
                         new Alert(
@@ -163,28 +194,71 @@ public class MainWindow extends Application {
                 });
                 break;
 
-            case "creature_added":
-                // TODO
+            case "creature_added": {
+                CreatureModel model = (CreatureModel) message.getAttachment();
+                creaturesTable.getItems().add(model);
                 break;
+            }
 
-            case "creature_removed":
-                // TODO
+            case "creature_removed": {
+                CreatureModel model = (CreatureModel) message.getAttachment();
+                creaturesTable.getItems().remove(model);
                 break;
+            }
 
             case "creature_updated":
-                // TODO
+                CreatureModel model = (CreatureModel) message.getAttachment();
+                for (CreatureModel current : creaturesTable.getItems()) {
+                    if (current.getId() == model.getId()) {
+                        creaturesTable.getItems().remove(current);
+                        break;
+                    }
+                }
+                creaturesTable.getItems().add(model);
                 break;
 
-            case "creatures_list_updated":
+            case "creatures_list_updated": {
                 @SuppressWarnings("unchecked")
-                Set<CreatureModel> creatureModels = (Set<CreatureModel>)message.getAttachment();
+                Set<CreatureModel> creatureModels = (Set<CreatureModel>) message.getAttachment();
                 creaturesTable.getItems().setAll(creatureModels);
                 break;
+            }
+        }
+    }
+
+    @FXML
+    public void onLogoutClicked() {
+        if (receivingThread.isAlive()) {
+            Properties properties = new Properties();
+            properties.setProperty("send_response", "true");
+            sendMessage("disconnect", properties);
+        } else {
+            Platform.runLater(() -> {
+                stage.close();
+                promptLogin();
+            });
+        }
+    }
+
+    @FXML
+    public void onSettingsClicked() throws InterruptedException {
+        new SettingsDialog((changed) -> {
+            if (changed)
+                loadView();
+            stage.setOpacity(1);
+        });
+        for (float i = 1; i >= 0.5; i -= 0.01) {
+            Thread.sleep(10);
+            stage.setOpacity(i);
         }
     }
 
     private void onMessageReceivingException(Exception e) {
         Platform.runLater(() -> {
+            if (e instanceof EOFException)
+                return;
+            if (e instanceof SocketException && e.getMessage().equals("Socket closed"))
+                return;
             if (e instanceof SocketException && e.getMessage().equals("Connection reset")) {
                 stage.close();
                 promptLogin();
@@ -194,7 +268,7 @@ public class MainWindow extends Application {
             } else {
                 stage.close();
                 promptLogin();
-                e.printStackTrace();
+//                e.printStackTrace();
                 Alert alert = new Alert(Alert.AlertType.ERROR);
                 alert.setHeaderText(Client.currentResourceBundle().getString("main.connection-error"));
                 alert.setContentText(e.toString());
