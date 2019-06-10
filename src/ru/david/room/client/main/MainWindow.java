@@ -29,7 +29,7 @@ import java.util.ResourceBundle;
 import java.util.Set;
 
 /**
- * Основное окно приложения
+ * Основное окно приложения. Милая мордашка, не правда ли?
  */
 @SuppressWarnings("unused")
 public class MainWindow extends Application {
@@ -61,6 +61,9 @@ public class MainWindow extends Application {
             promptLogin();
     }
 
+    /**
+     * Показывает {@link LoginDialog}, после успешного входа снова показывает это окно
+     */
     private void promptLogin() {
         new LoginDialog((userid, token, name, color, socket, in, out) -> {
             Client.setSocket(socket);
@@ -135,7 +138,6 @@ public class MainWindow extends Application {
                 usersList.getChildren().setAll(usersListChildren);
             }
         } catch (Exception e) {
-//            e.printStackTrace();
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle(bundle.getString("login-dialog.error-alert-title"));
             alert.setHeaderText(bundle.getString("login-dialog.error-alert-header"));
