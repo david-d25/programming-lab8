@@ -25,6 +25,17 @@
                 <Font size="24" />
             </font>
         </Label>
+        <HBox HBox.hgrow="ALWAYS" alignment="CENTER_RIGHT">
+            <HBox.margin>
+                <Insets right="20"/>
+            </HBox.margin>
+            <Hyperlink onMouseClicked="#onSettingsClicked" styleClass="no-border" text="%main.settings">
+                <HBox.margin>
+                    <Insets right="20"/>
+                </HBox.margin>
+            </Hyperlink>
+            <Hyperlink onMouseClicked="#onLogoutClicked" styleClass="no-border" text="%main.logout" />
+        </HBox>
     </HBox>
     <GridPane alignment="CENTER" hgap="10.0" vgap="10.0" VBox.vgrow="ALWAYS">
 
