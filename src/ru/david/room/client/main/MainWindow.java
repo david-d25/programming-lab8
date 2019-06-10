@@ -104,6 +104,9 @@ public class MainWindow extends Application {
     private void loadView() {
         ResourceBundle bundle = Client.currentResourceBundle();
 
+        double width = stage.getWidth();
+        double height = stage.getHeight();
+
         ObservableList<CreatureModel> creatureModels = null;
         ObservableList<Node> usersListChildren = null;
 
@@ -137,6 +140,9 @@ public class MainWindow extends Application {
                 creaturesTable.setItems(creatureModels);
                 usersList.getChildren().setAll(usersListChildren);
             }
+
+            stage.setWidth(width);
+            stage.setHeight(height);
         } catch (Exception e) {
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle(bundle.getString("login-dialog.error-alert-title"));
