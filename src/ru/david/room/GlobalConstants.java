@@ -4,6 +4,10 @@ package ru.david.room;
  * Глобальные константы для клиента и сервера
  */
 public class GlobalConstants {
+    /**
+     * Используется в {@link Utils#colorize(String)}
+     */
+    @SuppressWarnings("unused")
     public static final class ANSI_COLORS {
         public static final String RESET  = "\u001B[0m";
 

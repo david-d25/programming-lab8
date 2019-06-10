@@ -7,8 +7,9 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.GregorianCalendar;
 
-import static ru.david.room.GlobalConstants.*;
-
+/**
+ * Пишет логи
+ */
 class Logger {
     private PrintStream out;
     private PrintStream err;

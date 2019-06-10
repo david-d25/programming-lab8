@@ -101,6 +101,9 @@ public class MainWindow extends Application {
         });
     }
 
+    /**
+     * Загружает/обновляет внешний вид приложения
+     */
     private void loadView() {
         ResourceBundle bundle = Client.currentResourceBundle();
 
@@ -153,10 +156,22 @@ public class MainWindow extends Application {
         }
     }
 
+    /**
+     * Отправляет сообщение серверу
+     *
+     * @param message сообщение
+     */
     private void sendMessage(String message) {
         sendMessage(message, null);
     }
 
+    /**
+     * Отправляет серверу сообщение с приложением
+     *
+     * @param message сообщение
+     *
+     * @param attachment приложение
+     */
     private void sendMessage(String message, Serializable attachment) {
         try {
             Message request = new Message(message, attachment);
@@ -168,6 +183,18 @@ public class MainWindow extends Application {
         }
     }
 
+    /**
+     * Должен вызываться каждый раз, когда приходит сообщение от сервера
+     *
+     * <del>
+     * Если б мне платили каждый раз,
+     * каждый раз, когда я думаю о тебе,
+     * я бы "disconnected" каждый час,
+     * я бы кинула Exception и stackTrace
+     * </del>
+     *
+     * @param message сообщение
+     */
     private void onMessageReceived(Message message) {
         System.out.println(message.getText());
         switch (message.getText()) {
