@@ -9,6 +9,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.HashSet;
+import java.util.Properties;
 import java.util.Set;
 
 /**
@@ -31,6 +32,7 @@ public class ClientPool implements HubFriendly {
 
     void addClient(Socket socket) {
         connectors.add(new ClientConnector(socket));
+        logger.log("Новое соединение: " + socket.getInetAddress() + ", соединено " + connectors.size() + " клиентов");
     }
 
     /**
@@ -51,8 +53,16 @@ public class ClientPool implements HubFriendly {
         logger.log("Проверять мы его, конечно, не будем");
     }
 
-    private void removeConnector(ClientConnector c) {
-        connectors.remove(c);
+    void removeConnector(ClientConnector c) {
+        removeConnector(c, true);
+    }
+
+    private void removeConnector(ClientConnector c, boolean log) {
+        if (connectors.contains(c)) {
+            connectors.remove(c);
+            if (log)
+                logger.log("Коннектор удален, соединено " + connectors.size() + " клиентов");
+        }
     }
 
     class ClientConnector extends Thread {
@@ -84,6 +94,10 @@ public class ClientPool implements HubFriendly {
             }
         }
 
+        public ObjectOutputStream getOut() {
+            return out;
+        }
+
         boolean isSubscribedToStrongStatements() {
             return subscribedToStrongStatements;
         }
@@ -95,25 +109,47 @@ public class ClientPool implements HubFriendly {
                     Message message = (Message) in.readObject();
                     switch (message.getText()) {
                         case "disconnect":
+                            if (message.hasAttachment()) {
+                                Properties arguments = (Properties)message.getAttachment();
+                                if ("true".equals(arguments.getProperty("send_response")))
+                                    out.writeObject(new Message("disconnected"));
+                            }
+
                             socket.close();
-                            removeConnector(this);
-                            continue;
+                            removeConnector(this, false);
+
+                            if (message.getUserid() != null)
+                                logger.log("Клиент с id " + message.getUserid() + " отсоединился. Соединено " + connectors.size() + " клиентов");
+                            else
+                                logger.log("Аноним отсоединился из ip " + socket.getInetAddress());
+                            return;
 
                         case "subscribe":
                             subscribedToStrongStatements = true;
+
+                            if (message.getUserid() != null)
+                                logger.log("Клиент с id " + message.getUserid() + " подписался на события");
+                            else
+                                logger.log("Аноним подписался на события из ip " + socket.getInetAddress());
                             continue;
 
                         case "unsubscribe":
                             subscribedToStrongStatements = false;
+
+                            if (message.getUserid() != null)
+                                logger.log("Клиент с id " + message.getUserid() + " отписался от событий");
+                            else
+                                logger.log("Аноним отписался от событий из ip " + socket.getInetAddress());
                             continue;
                     }
-                    hub.getRequestResolver().resolveAsync(out, message);
+
+                    hub.getRequestResolver().resolveAsync(this, message);
                 }
             } catch (ClassNotFoundException e) {
                 logger.err("Клиент отправил экземпляр незнакомого серверу класса: " + e.toString());
             } catch (IOException e) {
                 if (!(e instanceof SocketException && e.getMessage().equals("Connection reset")))
-                    logger.warn("Ошибка подключения клиента: " + e.toString());
+                    logger.warn("Клиент неожиданно отсоединился: " + e.toString());
             } finally {
                 removeConnector(this);
             }
