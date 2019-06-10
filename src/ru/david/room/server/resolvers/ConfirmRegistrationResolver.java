@@ -32,12 +32,13 @@ public class ConfirmRegistrationResolver implements Resolver {
             controller.removeRegistrationToken(code);
 
             statement = connection.prepareStatement("insert into users " +
-                    "(name, email, password_hash, registered) values (?, ?, ?, ?)");
+                    "(name, email, password_hash, registered, color888) values (?, ?, ?, ?, ?)");
 
             statement.setString(1, name);
             statement.setString(2, email);
             statement.setBytes(3, passwordHash);
             statement.setTimestamp(4, registered);
+            statement.setInt(5, (int)(0x1000000*Math.random()));
 
             statement.execute();
 

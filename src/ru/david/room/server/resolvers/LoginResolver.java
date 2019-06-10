@@ -36,15 +36,7 @@ public class LoginResolver implements Resolver {
                     resultSet.getInt("id"),
                     userName
             ));
-
-            statement = controller.getConnection().prepareStatement(
-                    "select * from user_tokens where userid = ? and token = ?"
-            );
-            statement.setString(1, userid);
-            statement.setString(2, userToken);
-            ResultSet set = statement.executeQuery();
-            set.next();
-            int userColor = set.getInt("color888");
+            int userColor = resultSet.getInt("color888");
 
             result.setProperty("userid", userid);
             result.setProperty("user_name", userName);

@@ -24,6 +24,6 @@ public class LogoutResolver implements Resolver, RequiresAuthorization {
                 new Message("users_list_updated", controller.generateOnlineUsersList())
         );
 
-        return new Message("OK");
+        return null;
     }
 }
