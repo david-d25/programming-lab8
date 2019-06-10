@@ -88,7 +88,7 @@ public class RegisterDialog {
 
             stage.getScene().getStylesheets().add("/style/register.css");
         } catch (Exception e) {
-            e.printStackTrace();
+//            e.printStackTrace();
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle(bundle.getString("login-dialog.error-alert-title"));
             alert.setHeaderText(bundle.getString("login-dialog.error-alert-header"));
@@ -105,6 +105,8 @@ public class RegisterDialog {
         repeatedPasswordInput.setDisable(true);
         proceedButton.setDisable(true);
 
+        cancelConfirmationButton.setDisable(true);
+        cancelConfirmationButton.setManaged(false);
         cancelConfirmationButton.setVisible(false);
 
         ResourceBundle bundle = Client.currentResourceBundle();
@@ -292,6 +294,8 @@ public class RegisterDialog {
         registrationTab.setDisable(true);
         confirmationTab.setDisable(false);
         tabPane.getSelectionModel().select(confirmationTab);
+        cancelConfirmationButton.setDisable(false);
+        cancelConfirmationButton.setManaged(true);
         cancelConfirmationButton.setVisible(true);
     }
 

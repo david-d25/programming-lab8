@@ -92,7 +92,7 @@
                         <Insets bottom="20" />
                     </VBox.margin>
                     <Button defaultButton="true" fx:id="confirmButton" text="%register-dialog.confirm-button" onAction="#onConfirmClick"/>
-                    <Button visible="false" fx:id="cancelConfirmationButton" text="%register-dialog.cancel-confirmation-button" onAction="#onCancelConfirmationClick"/>
+                    <Button fx:id="cancelConfirmationButton" text="%register-dialog.cancel-confirmation-button" onAction="#onCancelConfirmationClick"/>
                 </HBox>
             </VBox>
         </Tab>
