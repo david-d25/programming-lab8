@@ -28,16 +28,18 @@ public class RequestResolver implements HubFriendly {
         logger = hub.getLogger();
     }
 
-    void resolveAsync(ObjectOutputStream out, Message message) {
-        new AsyncResolver(out, message);
+    void resolveAsync(ClientPool.ClientConnector connector, Message message) {
+        new AsyncResolver(connector, message);
     }
 
     private class AsyncResolver extends Thread {
+        private final ClientPool.ClientConnector connector;
         private ObjectOutputStream out;
         private Message message;
 
-        AsyncResolver(ObjectOutputStream o, Message m) {
-            out = o;
+        AsyncResolver(ClientPool.ClientConnector c, Message m) {
+            connector = c;
+            out = c.getOut();
             message = m;
             start();
         }
@@ -92,6 +94,8 @@ public class RequestResolver implements HubFriendly {
                 }
             } catch (IOException | NullPointerException e) {
                 logger.warn("Не получилось отправить ответ: " + e.toString());
+                hub.getClientPool().removeConnector(connector);
+//                e.printStackTrace();
             }
         }
     }
