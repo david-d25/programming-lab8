@@ -315,7 +315,7 @@ public class ServerController implements HubFriendly {
      * @param token токен пользователя
      *
      */
-    public void updateUserToken(int userid, int token) throws SQLException {
+    void updateUserToken(int userid, int token) throws SQLException {
         if (connection == null)
             return;
         PreparedStatement statement = connection.prepareStatement(

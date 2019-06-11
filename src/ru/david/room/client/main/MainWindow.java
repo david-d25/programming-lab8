@@ -2,14 +2,15 @@ package ru.david.room.client.main;
 
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.*;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.Label;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -79,29 +80,55 @@ public class MainWindow extends Application {
             loadView();
             stage.show();
 
-            receivingThread = new Thread(() -> {
-                try {
-                    sendMessage("subscribe");
-                    sendMessage("request_users");
-                    sendMessage("request_creatures");
-                    while (true) {
-                        Message incoming = (Message) in.readObject();
-                        if (incoming.getText().equals("disconnected")) {
-                            Platform.runLater(() -> {
-                                stage.close();
-                                promptLogin();
-                            });
-                            break;
-                        }
-                        onMessageReceived(incoming);
-                    }
-                } catch (Exception e) {
-                    onMessageReceivingException(e);
-                }
-            });
-            receivingThread.setDaemon(true);
-            receivingThread.start();
+            initReceivingThread();
+            initAliveDetectingThread();
         });
+    }
+
+    /**
+     * Запускает слушатель сообщений от сервера
+     */
+    private void initReceivingThread() {
+        receivingThread = new Thread(() -> {
+            try {
+                sendMessage("subscribe");
+                sendMessage("request_users");
+                sendMessage("request_creatures");
+                while (true) {
+                    Message incoming = (Message) in.readObject();
+                    if (incoming.getText().equals("disconnected")) {
+                        Platform.runLater(() -> {
+                            stage.close();
+                            promptLogin();
+                        });
+                        break;
+                    }
+                    onMessageReceived(incoming);
+                }
+            } catch (Exception e) {
+                onMessageReceivingException(e);
+            }
+        });
+        receivingThread.setDaemon(true);
+        receivingThread.start();
+    }
+
+    private void initAliveDetectingThread() {
+        Thread aliveDetectingThread = new Thread(() -> {
+            try {
+                Thread.sleep(10000);
+                stage.getScene().setOnMouseMoved(e -> {
+                    stage.getScene().setOnMouseMoved(null);
+                    sendMessage("i_am_alive");
+                    initAliveDetectingThread();
+                });
+            } catch (InterruptedException e) {
+                System.out.println("[ WARN ] Alive detecting thread has been interrupted");
+                initAliveDetectingThread();
+            }
+        });
+        aliveDetectingThread.setDaemon(true);
+        aliveDetectingThread.start();
     }
 
     /**

@@ -9,7 +9,7 @@ import java.sql.SQLException;
 import java.util.HashSet;
 
 @SuppressWarnings("unused")
-public class RequestCreaturesResolver implements Resolver, RequiresAuthorization {
+public class RequestCreaturesResolver implements Resolver, RequiresAuthorization, UpdatesTokenLifetime {
     @Override
     public Message resolve(Message message, Hub hub) throws SQLException {
         ResultSet resultSet = hub.getController().getConnection().createStatement().executeQuery("select * from creatures");
