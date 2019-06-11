@@ -2,14 +2,14 @@ package ru.david.room.client.main;
 
 import javafx.application.Application;
 import javafx.application.Platform;
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Label;
+import javafx.scene.control.*;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -51,6 +51,9 @@ public class MainWindow extends Application {
     @FXML private Label creaturesCountLabel;
     @FXML private UsersList usersList;
     @FXML private CreaturesTable creaturesTable;
+    @FXML private Label selectCreaturesLabel;
+    @FXML private ScrollPane propertiesScrollPane;
+    @FXML private CreaturePropertiesPane creaturePropertiesPane;
 
     @Override
     public void start(Stage primaryStage) {
@@ -146,6 +149,10 @@ public class MainWindow extends Application {
 
             stage.setWidth(width);
             stage.setHeight(height);
+
+            creaturesTable.getSelectionModel().selectedItemProperty().addListener(
+                    (observable, oldValue, newValue) -> onCreatureSelected(newValue)
+            );
         } catch (Exception e) {
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle(bundle.getString("login-dialog.error-alert-title"));
@@ -181,6 +188,19 @@ public class MainWindow extends Application {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Вызывается, когда существо выбрано
+     *
+     * @param model модель существа
+     */
+    private void onCreatureSelected(CreatureModel model) {
+        propertiesScrollPane.setVisible(true);
+        propertiesScrollPane.setManaged(true);
+        selectCreaturesLabel.setVisible(false);
+        selectCreaturesLabel.setManaged(false);
+        creaturePropertiesPane.selectCreature(model, model.getOwnerid() == userid);
     }
 
     /**

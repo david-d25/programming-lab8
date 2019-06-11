@@ -2,12 +2,22 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.canvas.Canvas?>
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.Hyperlink?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Circle?>
 <?import javafx.scene.text.Font?>
-<?import ru.david.room.client.main.CreaturesTable?>
 <?import ru.david.room.client.ui.UsersList?>
+
+<?import ru.david.room.client.main.CreaturesTable?>
+<?import ru.david.room.client.main.CreaturePropertiesPane?>
 <VBox prefHeight="400" prefWidth="640" styleClass="root" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1">
     <HBox alignment="CENTER_LEFT">
         <Circle fx:id="userColorCircle" radius="8">
@@ -25,13 +35,13 @@
                 <Font size="24" />
             </font>
         </Label>
-        <HBox HBox.hgrow="ALWAYS" alignment="CENTER_RIGHT">
+        <HBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS">
             <HBox.margin>
-                <Insets right="20"/>
+                <Insets right="20" />
             </HBox.margin>
             <Hyperlink onMouseClicked="#onSettingsClicked" styleClass="no-border" text="%main.settings">
                 <HBox.margin>
-                    <Insets right="20"/>
+                    <Insets right="20" />
                 </HBox.margin>
             </Hyperlink>
             <Hyperlink onMouseClicked="#onLogoutClicked" styleClass="no-border" text="%main.logout" />
@@ -42,7 +52,7 @@
         <TabPane maxHeight="Infinity" maxWidth="Infinity" GridPane.columnSpan="2" GridPane.rowSpan="2">
 
             <Tab closable="false" text="%main.table-tab-title">
-                <ScrollPane fitToWidth="true" fitToHeight="true">
+                <ScrollPane fitToHeight="true" fitToWidth="true">
                     <CreaturesTable fx:id="creaturesTable"/>
                 </ScrollPane>
             </Tab>
@@ -54,19 +64,27 @@
 
         <VBox GridPane.columnIndex="2">
             <Label text="%main.settings-pane-title" />
+            <Label alignment="CENTER" maxWidth="Infinity" fx:id="selectCreaturesLabel" prefHeight="20.0" text="%main.select-creature">
+                <font>
+                    <Font size="14" />
+                </font>
+            </Label>
+            <ScrollPane visible="false" managed="false" fx:id="propertiesScrollPane" VBox.vgrow="ALWAYS" fitToWidth="true">
+                <CreaturePropertiesPane fx:id="creaturePropertiesPane"/>
+            </ScrollPane>
         </VBox>
 
         <VBox GridPane.columnIndex="2" GridPane.rowIndex="1">
             <Label text="%main.users-pane-title" />
-            <ScrollPane VBox.vgrow="ALWAYS" style="-fx-background-color: #ffffff;">
-                <UsersList fx:id="usersList"/>
+            <ScrollPane style="-fx-background-color: #ffffff;" VBox.vgrow="ALWAYS">
+                <UsersList fx:id="usersList" />
             </ScrollPane>
         </VBox>
 
       <columnConstraints>
          <ColumnConstraints hgrow="ALWAYS" />
          <ColumnConstraints hgrow="ALWAYS" minWidth="10.0" prefWidth="100.0" />
-         <ColumnConstraints hgrow="ALWAYS" minWidth="10.0" prefWidth="100.0" />
+         <ColumnConstraints hgrow="ALWAYS" minWidth="200.0" prefWidth="100.0" />
       </columnConstraints>
       <rowConstraints>
          <RowConstraints vgrow="ALWAYS" />
