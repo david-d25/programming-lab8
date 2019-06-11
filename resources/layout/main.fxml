@@ -31,8 +31,11 @@
             </font>
         </Label>
         <Label fx:id="creaturesCountLabel">
+            <HBox.margin>
+                <Insets left="15"/>
+            </HBox.margin>
             <font>
-                <Font size="24" />
+                <Font size="16" />
             </font>
         </Label>
         <HBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS">

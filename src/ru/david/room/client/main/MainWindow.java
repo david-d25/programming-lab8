@@ -82,6 +82,7 @@ public class MainWindow extends Application {
 
             initReceivingThread();
             initAliveDetectingThread();
+            updateCreaturesCountText();
         });
     }
 
@@ -103,7 +104,7 @@ public class MainWindow extends Application {
                         });
                         break;
                     }
-                    onMessageReceived(incoming);
+                    Platform.runLater(() -> onMessageReceived(incoming));
                 }
             } catch (Exception e) {
                 onMessageReceivingException(e);
@@ -279,12 +280,14 @@ public class MainWindow extends Application {
             case "creature_added": {
                 CreatureModel model = (CreatureModel) message.getAttachment();
                 creaturesTable.getItems().add(model);
+                updateCreaturesCountText();
                 break;
             }
 
             case "creature_removed": {
                 CreatureModel model = (CreatureModel) message.getAttachment();
                 creaturesTable.getItems().remove(model);
+                updateCreaturesCountText();
                 break;
             }
 
@@ -303,9 +306,17 @@ public class MainWindow extends Application {
                 @SuppressWarnings("unchecked")
                 Set<CreatureModel> creatureModels = (Set<CreatureModel>) message.getAttachment();
                 creaturesTable.getItems().setAll(creatureModels);
+                updateCreaturesCountText();
                 break;
             }
         }
+    }
+
+    public void updateCreaturesCountText() {
+        int creaturesCount = 0;
+        for (CreatureModel current : creaturesTable.getItems())
+            creaturesCount += current.getOwnerid() == userid ? 1 : 0;
+        creaturesCountLabel.setText(creaturesCount + " " + Client.currentResourceBundle().getString("main.creatures-count-text"));
     }
 
     @FXML
