@@ -120,7 +120,7 @@ public class CreatureCreatingHyperlink extends Hyperlink {
         popup.initStyle(StageStyle.TRANSPARENT);
         popup.getScene().setFill(Color.TRANSPARENT);
 
-        container.setBackground(new Background(new BackgroundFill(Color.SNOW, null, null)));
+        container.setBackground(new Background(new BackgroundFill(Color.WHITE, null, null)));
 
         closeButton.setOnAction((e) -> closePopup());
         createButton.setOnAction((e) -> onCreate());

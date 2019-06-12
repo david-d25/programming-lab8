@@ -296,7 +296,7 @@ public class MainWindow extends Application {
                 break;
             }
 
-            case "creature_removed": {
+            case "creature_deleted": {
                 CreatureModel model = (CreatureModel) message.getAttachment();
                 creaturesTable.getItems().remove(model);
                 updateCreaturesCountText();
