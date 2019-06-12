@@ -16,7 +16,6 @@ import java.util.ResourceBundle;
 
 public class CreaturePropertiesPane extends VBox {
     private CreatureModel selected;
-    private boolean editable;
 
     private Label idLabel, ownerIdLabel, createdLabel;
 
@@ -41,6 +40,18 @@ public class CreaturePropertiesPane extends VBox {
         applyButton = new Button(bundle.getString("main.apply"));
         resetButton = new Button(bundle.getString("main.reset"));
         deleteButton = new Button(bundle.getString("main.delete"));
+
+        xInput.setBlockIncrement(1);
+        xInput.setShowTickLabels(true);
+        xInput.setShowTickMarks(true);
+
+        yInput.setBlockIncrement(1);
+        yInput.setShowTickLabels(true);
+        yInput.setShowTickMarks(true);
+
+        radiusInput.setBlockIncrement(1);
+        radiusInput.setShowTickLabels(true);
+        radiusInput.setShowTickMarks(true);
 
         HBox nameInputPane = new HBox(new Label(bundle.getString("main.name")), nameInput);
         nameInputPane.setAlignment(Pos.CENTER_LEFT);
@@ -82,7 +93,6 @@ public class CreaturePropertiesPane extends VBox {
 
     void selectCreature(CreatureModel model, boolean editable) {
         selected = model;
-        this.editable = editable;
 
         applyButton.setDisable(true);
         resetButton.setDisable(true);
@@ -106,7 +116,7 @@ public class CreaturePropertiesPane extends VBox {
     }
 
     private void onApply() {
-
+        // TODO
     }
 
     private void onReset() {
@@ -114,7 +124,7 @@ public class CreaturePropertiesPane extends VBox {
     }
 
     private void onDelete() {
-
+        // TODO
     }
 
     private void resetProperties() {

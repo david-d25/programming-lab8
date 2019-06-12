@@ -55,6 +55,7 @@ public class MainWindow extends Application {
     @FXML private Label selectCreaturesLabel;
     @FXML private ScrollPane propertiesScrollPane;
     @FXML private CreaturePropertiesPane creaturePropertiesPane;
+    @FXML private CreatureCreatingHyperlink creatureCreatingHyperlink;
 
     @Override
     public void start(Stage primaryStage) {
@@ -82,7 +83,6 @@ public class MainWindow extends Application {
 
             initReceivingThread();
             initAliveDetectingThread();
-            updateCreaturesCountText();
         });
     }
 
@@ -181,6 +181,18 @@ public class MainWindow extends Application {
             creaturesTable.getSelectionModel().selectedItemProperty().addListener(
                     (observable, oldValue, newValue) -> onCreatureSelected(newValue)
             );
+
+            updateCreaturesCountText();
+            creatureCreatingHyperlink.setParent(stage);
+
+            creatureCreatingHyperlink.setCreatureCreatingListener((name, x, y, radius) -> {
+                Properties properties = new Properties();
+                properties.setProperty("name", name);
+                properties.setProperty("x", Integer.toString(x));
+                properties.setProperty("y", Integer.toString(y));
+                properties.setProperty("radius", Float.toString(radius));
+                sendMessage("create_creature", properties);
+            });
         } catch (Exception e) {
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle(bundle.getString("login-dialog.error-alert-title"));
@@ -312,7 +324,7 @@ public class MainWindow extends Application {
         }
     }
 
-    public void updateCreaturesCountText() {
+    private void updateCreaturesCountText() {
         int creaturesCount = 0;
         for (CreatureModel current : creaturesTable.getItems())
             creaturesCount += current.getOwnerid() == userid ? 1 : 0;

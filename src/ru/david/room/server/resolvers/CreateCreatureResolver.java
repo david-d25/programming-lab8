@@ -36,7 +36,18 @@ public class CreateCreatureResolver implements Resolver, RequiresAuthorization, 
             statement.setInt(5, ownerid);
             statement.setTimestamp(6, created);
 
-            ResultSet resultSet = statement.executeQuery();
+            statement.execute();
+
+            ResultSet resultSet = statement.getGeneratedKeys();
+            resultSet.next();
+
+            long id = resultSet.getLong(1);
+
+            statement = connection.prepareStatement(
+                    "select * from creatures where id = ?"
+            );
+            statement.setLong(1, id);
+            resultSet = statement.executeQuery();
             resultSet.next();
 
             CreatureModel model = CreatureModel.fromResultSet(resultSet);

@@ -74,10 +74,9 @@ public class RequestResolver implements HubFriendly {
                             response = new Message("AUTH_FAILED");
                     } else
                         response = resolver.resolve(message, hub);
-                    if (resolver instanceof UpdatesTokenLifetime) {
-                        if (message.getUserid() != null && message.getToken() != null)
-                            hub.getController().updateUserToken(message.getUserid(), message.getToken());
-                    }
+
+                    if (resolver instanceof UpdatesTokenLifetime && message.getUserid() != null && message.getToken() != null)
+                        hub.getController().updateUserToken(message.getUserid(), message.getToken());
 
                 } catch (ClassNotFoundException | NoClassDefFoundError ignored) {
                 } catch (ClassCastException | IllegalAccessException | InstantiationException e) {

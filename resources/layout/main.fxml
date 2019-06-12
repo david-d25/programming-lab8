@@ -18,18 +18,22 @@
 
 <?import ru.david.room.client.main.CreaturesTable?>
 <?import ru.david.room.client.main.CreaturePropertiesPane?>
+<?import ru.david.room.client.main.CreatureCreatingHyperlink?>
 <VBox prefHeight="400" prefWidth="640" styleClass="root" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1">
     <HBox alignment="CENTER_LEFT">
+
         <Circle fx:id="userColorCircle" radius="8">
             <HBox.margin>
                 <Insets bottom="20" left="20" right="10" top="20" />
             </HBox.margin>
         </Circle>
+
         <Label fx:id="userNameLabel">
             <font>
                 <Font size="24" />
             </font>
         </Label>
+
         <Label fx:id="creaturesCountLabel">
             <HBox.margin>
                 <Insets left="15"/>
@@ -38,6 +42,13 @@
                 <Font size="16" />
             </font>
         </Label>
+
+        <CreatureCreatingHyperlink fx:id="creatureCreatingHyperlink" styleClass="no-border">
+            <HBox.margin>
+                <Insets left="15"/>
+            </HBox.margin>
+        </CreatureCreatingHyperlink>
+
         <HBox alignment="CENTER_RIGHT" HBox.hgrow="ALWAYS">
             <HBox.margin>
                 <Insets right="20" />
@@ -49,7 +60,9 @@
             </Hyperlink>
             <Hyperlink onMouseClicked="#onLogoutClicked" styleClass="no-border" text="%main.logout" />
         </HBox>
+
     </HBox>
+
     <GridPane alignment="CENTER" hgap="10.0" vgap="10.0" VBox.vgrow="ALWAYS">
 
         <TabPane maxHeight="Infinity" maxWidth="Infinity" GridPane.columnSpan="2" GridPane.rowSpan="2">
@@ -89,10 +102,12 @@
          <ColumnConstraints hgrow="ALWAYS" minWidth="10.0" prefWidth="100.0" />
          <ColumnConstraints hgrow="ALWAYS" minWidth="200.0" prefWidth="100.0" />
       </columnConstraints>
+
       <rowConstraints>
          <RowConstraints vgrow="ALWAYS" />
          <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="ALWAYS" />
       </rowConstraints>
+
       <VBox.margin>
          <Insets bottom="10.0" left="10.0" right="10.0" />
       </VBox.margin>
