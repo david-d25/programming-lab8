@@ -17,6 +17,9 @@ import java.util.ResourceBundle;
 public class CreaturePropertiesPane extends VBox {
     private CreatureModel selected;
 
+    private CreatureDeletingListener deletingListener = creatureId -> {};
+    private CreatureApplyingListener applyingListener = model -> {};
+
     private Label idLabel, ownerIdLabel, createdLabel;
 
     private TextField nameInput;
@@ -110,13 +113,30 @@ public class CreaturePropertiesPane extends VBox {
         }
     }
 
+    public void setApplyingListener(CreatureApplyingListener applyingListener) {
+        this.applyingListener = applyingListener;
+    }
+
+    public void setDeletingListener(CreatureDeletingListener deletingListener) {
+        this.deletingListener = deletingListener;
+    }
+
     private void onEdited() {
         applyButton.setDisable(false);
         resetButton.setDisable(false);
     }
 
     private void onApply() {
-        // TODO
+        if (nameInput.getText().length() == 0 || nameInput.getText().length() > 32)
+            return; // TODO: Show warning
+        applyingListener.applyRequested(new CreatureModel(
+                        selected.getId(),
+                        (int)xInput.getValue(),
+                        (int)yInput.getValue(),
+                        (float)radiusInput.getValue(),
+                        selected.getOwnerid(),
+                        nameInput.getText()
+        ));
     }
 
     private void onReset() {
@@ -124,7 +144,7 @@ public class CreaturePropertiesPane extends VBox {
     }
 
     private void onDelete() {
-        // TODO
+        deletingListener.deleteRequested(selected.getId());
     }
 
     private void resetProperties() {

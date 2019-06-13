@@ -193,6 +193,8 @@ public class MainWindow extends Application {
                 properties.setProperty("radius", Float.toString(radius));
                 sendMessage("create_creature", properties);
             });
+
+            creaturePropertiesPane.setDeletingListener(creatureId -> sendMessage("delete_creature", creatureId));
         } catch (Exception e) {
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle(bundle.getString("login-dialog.error-alert-title"));
