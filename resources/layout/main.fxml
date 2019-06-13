@@ -19,6 +19,7 @@
 <?import ru.david.room.client.main.CreaturesTable?>
 <?import ru.david.room.client.main.CreaturePropertiesPane?>
 <?import ru.david.room.client.main.CreatureCreatingHyperlink?>
+<?import ru.david.room.client.main.CreaturesCanvas?>
 <VBox prefHeight="400" prefWidth="640" styleClass="root" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1">
     <HBox alignment="CENTER_LEFT">
 
@@ -73,7 +74,7 @@
                 </ScrollPane>
             </Tab>
             <Tab closable="false" text="%main.canvas-tab-title">
-                <Canvas />
+                <CreaturesCanvas fx:id="creaturesCanvas"/>
             </Tab>
 
         </TabPane>

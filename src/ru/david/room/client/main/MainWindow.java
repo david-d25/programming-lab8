@@ -54,6 +54,7 @@ public class MainWindow extends Application {
     @FXML private CreaturesTable creaturesTable;
     @FXML private Label selectCreaturesLabel;
     @FXML private ScrollPane propertiesScrollPane;
+    @FXML private CreaturesCanvas creaturesCanvas;
     @FXML private CreaturePropertiesPane creaturePropertiesPane;
     @FXML private CreatureCreatingHyperlink creatureCreatingHyperlink;
 
@@ -114,6 +115,9 @@ public class MainWindow extends Application {
         receivingThread.start();
     }
 
+    /**
+     * Запускает поток, проверяющий наличие активности в главном окне
+     */
     private void initAliveDetectingThread() {
         Thread aliveDetectingThread = new Thread(() -> {
             try {
@@ -328,6 +332,9 @@ public class MainWindow extends Application {
         }
     }
 
+    /**
+     * Обновляет текст с количеством существ
+     */
     private void updateCreaturesCountText() {
         int creaturesCount = 0;
         for (CreatureModel current : creaturesTable.getItems())
@@ -362,6 +369,10 @@ public class MainWindow extends Application {
         }
     }
 
+    /**
+     * Вызывается, если во время приема сообщения от сервера что-то пошло не так
+     * @param e возникшее исключение
+     */
     private void onMessageReceivingException(Exception e) {
         Platform.runLater(() -> {
             if (e instanceof EOFException)
@@ -377,7 +388,6 @@ public class MainWindow extends Application {
             } else {
                 stage.close();
                 promptLogin();
-//                e.printStackTrace();
                 Alert alert = new Alert(Alert.AlertType.ERROR);
                 alert.setHeaderText(Client.currentResourceBundle().getString("main.connection-error"));
                 alert.setContentText(e.toString());
