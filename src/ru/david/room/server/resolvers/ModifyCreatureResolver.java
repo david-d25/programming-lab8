@@ -4,11 +4,7 @@ import ru.david.room.CreatureModel;
 import ru.david.room.Message;
 import ru.david.room.server.Hub;
 
-import javax.mail.MessagingException;
-import java.security.GeneralSecurityException;
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.sql.*;
 
 /**
  * Решатель запроса на модификацию существа. В качестве объекта-аргумента принимает {@link CreatureModel},
@@ -31,7 +27,7 @@ public class ModifyCreatureResolver implements Resolver, RequiresAuthorization, 
             return new Message("BAD_REQUEST");
 
         PreparedStatement statement = connection.prepareStatement(
-                "update creatures set name = ?, x = ?, y = ?, radius = ? where id = ? and ownerid = ?"
+                "update creatures set name = ?, x = ?, y = ?, radius = ?, created = created where id = ? and ownerid = ?"
         );
         statement.setString(1, model.getName());
         statement.setInt(2, model.getX());
@@ -41,12 +37,19 @@ public class ModifyCreatureResolver implements Resolver, RequiresAuthorization, 
         statement.setInt(6, message.getUserid());
         statement.execute();
 
-        // Создаётся ещё одна модель, чтобы не использовать id владельца из объекта-аргумента (см. javadoc к классу)
-        CreatureModel newModel = new CreatureModel(
-                model.getId(), model.getX(), model.getY(), model.getRadius(), message.getUserid(), model.getName()
+        statement = connection.prepareStatement(
+                "select * from creatures where id = ? and ownerid = ?"
         );
+        statement.setLong(1, model.getId());
+        statement.setInt(2, message.getUserid());
+        ResultSet resultSet = statement.executeQuery();
 
-        hub.getClientPool().makeStrongStatement(new Message("creature_modified", newModel));
+        if (resultSet.next()) {
+            // Создаётся ещё одна модель, чтобы не использовать id владельца
+            // из объекта-аргумента (см. javadoc к классу) и не модифицировать время создания
+            CreatureModel newModel = CreatureModel.fromResultSet(resultSet);
+            hub.getClientPool().makeStrongStatement(new Message("creature_modified", newModel));
+        }
 
         return null;
     }

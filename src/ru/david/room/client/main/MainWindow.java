@@ -195,7 +195,7 @@ public class MainWindow extends Application {
             });
 
             creaturePropertiesPane.setDeletingListener(creatureId -> sendMessage("delete_creature", creatureId));
-            creaturePropertiesPane.setApplyingListener(model -> {}); // TODO: creature modifying feature
+            creaturePropertiesPane.setApplyingListener(model -> sendMessage("modify_creature", model));
         } catch (Exception e) {
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle(bundle.getString("login-dialog.error-alert-title"));
@@ -243,7 +243,7 @@ public class MainWindow extends Application {
         propertiesScrollPane.setManaged(true);
         selectCreaturesLabel.setVisible(false);
         selectCreaturesLabel.setManaged(false);
-        creaturePropertiesPane.selectCreature(model, model.getOwnerid() == userid);
+        creaturePropertiesPane.selectCreature(model, model != null && model.getOwnerid() == userid);
     }
 
     /**
@@ -308,13 +308,14 @@ public class MainWindow extends Application {
 
             case "creature_modified":
                 CreatureModel model = (CreatureModel) message.getAttachment();
-                for (CreatureModel current : creaturesTable.getItems()) {
-                    if (current.getId() == model.getId()) {
-                        creaturesTable.getItems().remove(current);
-                        break; // TODO: this is a workaround, fix it
+                ObservableList<CreatureModel> items = creaturesTable.getItems();
+                for (int i = 0, itemsSize = items.size(); i < itemsSize; i++) {
+                    if (items.get(i).getId() == model.getId()) {
+                        creaturesTable.getItems().set(i, model);
+                        creaturesTable.getSelectionModel().select(i);
+                        break;
                     }
                 }
-                creaturesTable.getItems().add(model);
                 break;
 
             case "creatures_list_updated": {

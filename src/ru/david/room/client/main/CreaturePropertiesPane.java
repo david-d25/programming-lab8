@@ -113,11 +113,11 @@ public class CreaturePropertiesPane extends VBox {
         }
     }
 
-    public void setApplyingListener(CreatureApplyingListener applyingListener) {
+    void setApplyingListener(CreatureApplyingListener applyingListener) {
         this.applyingListener = applyingListener;
     }
 
-    public void setDeletingListener(CreatureDeletingListener deletingListener) {
+    void setDeletingListener(CreatureDeletingListener deletingListener) {
         this.deletingListener = deletingListener;
     }
 
