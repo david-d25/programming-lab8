@@ -195,6 +195,7 @@ public class MainWindow extends Application {
             });
 
             creaturePropertiesPane.setDeletingListener(creatureId -> sendMessage("delete_creature", creatureId));
+            creaturePropertiesPane.setApplyingListener(model -> {}); // TODO: creature modifying feature
         } catch (Exception e) {
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle(bundle.getString("login-dialog.error-alert-title"));
@@ -305,12 +306,12 @@ public class MainWindow extends Application {
                 break;
             }
 
-            case "creature_updated":
+            case "creature_modified":
                 CreatureModel model = (CreatureModel) message.getAttachment();
                 for (CreatureModel current : creaturesTable.getItems()) {
                     if (current.getId() == model.getId()) {
                         creaturesTable.getItems().remove(current);
-                        break;
+                        break; // TODO: this is a workaround, fix it
                     }
                 }
                 creaturesTable.getItems().add(model);
