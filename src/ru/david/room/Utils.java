@@ -106,7 +106,7 @@ public class Utils {
                 (angle1Ratio == angle2Ratio)
         ) return null;
 
-        // Если какой-то отрезон вертикальный
+        // Если какой-то отрезок вертикальный
         if (Double.isInfinite(angle1Ratio) || Double.isInfinite(angle2Ratio)) {
             double resultX, resultY, offset;
             Point2D p1, p2;
