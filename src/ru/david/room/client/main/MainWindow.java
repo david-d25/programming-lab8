@@ -274,6 +274,7 @@ public class MainWindow extends Application {
 
                 Platform.runLater(() -> {
                     boolean thisUserIsLoggedOut = true;
+                    creaturesCanvas.getUserColors().clear();
                     usersList.clear();
                     for (Properties user : users) {
                         if (Integer.parseInt(user.getProperty("id")) == userid)
@@ -282,6 +283,11 @@ public class MainWindow extends Application {
                         usersList.addUser(
                                 Integer.parseInt(user.getProperty("id")),
                                 user.getProperty("name"),
+                                Color.valueOf(user.getProperty("color"))
+                        );
+
+                        creaturesCanvas.getUserColors().put(
+                                Integer.parseInt(user.getProperty("id")),
                                 Color.valueOf(user.getProperty("color"))
                         );
                     }

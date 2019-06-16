@@ -32,6 +32,62 @@ public class Utils {
     }
 
     /**
+     * Находит точки пересечения двух окружностей.
+     * Возвращает пустой массив, если точек пересечения нет или центры окружностей совпадают.
+     * Размер возвращаемого массив может быть 0, 1 или 2.
+     *
+     * <strong>This function is imported and not guaranteed to work</strong>
+     *
+     * @param c1 центр окружности 1
+     * @param c2 центр окружности 2
+     * @param r1 радиус окружности 1
+     * @param r2 радиус окружности 2
+     * @return массив точек пересечения
+     */
+    public static Point2D[] getCirclesIntersection(Point2D c1, Point2D c2, double r1, double r2) {
+        if (c1.distance(c2) > r1 + r2)  // Окружности слишком далеко
+            return new Point2D[0];
+
+        if (c1.equals(c2)) // Центры окружностей совпадают
+            return new Point2D[0];
+
+        double c = c2.getX() - c1.getX();
+        double d = c2.getY() - c1.getY();
+
+        double A = -2*c;
+        double B = -2*d;
+        double C = r1*r1 - r2*r2 + c*c + d*d;
+
+        double ro = Math.abs(C)/Math.sqrt(A*A + B*B);
+
+        if (ro > r1)
+            return new Point2D[0];
+
+        double x0 = -A*C/(A*A+B*B);
+        double y0 = -B*C/(A*A+B*B);
+
+        if (ro == r1)
+            return new Point2D[] {new Point2D(
+                    x0 + c1.getX(),
+                    y0 + c1.getY()
+            )};
+
+        double p = Math.sqrt(r1*r1 - (C*C)/(A*A+B*B));
+        double k = Math.sqrt((p*p)/(A*A+B*B));
+
+        return new Point2D[] {
+                new Point2D(
+                        x0 + B*k + c1.getX(),
+                        y0 - A*k + c1.getY()
+                ),
+                new Point2D(
+                        x0 - B*k + c1.getX(),
+                        y0 + A*k + c1.getY()
+                )
+        };
+    }
+
+    /**
      * Понятия не имею как, но функция возвращает точку пересечения двух отрезков.
      * Если точки нет, возвращает null.
      *

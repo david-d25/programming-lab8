@@ -1,23 +1,27 @@
 package ru.david.room.client.main;
 
+import javafx.animation.AnimationTimer;
 import javafx.collections.ObservableList;
 import javafx.geometry.Point2D;
+import javafx.geometry.VPos;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.TextAlignment;
 import ru.david.room.CreatureModel;
 import ru.david.room.Utils;
 
-import java.util.HashSet;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 
 public class CreaturesCanvas extends Canvas {
     private static final int AREA_SIZE = 1000;
+    private static final int PADDING = 50;
 
     private ObservableList<CreatureModel> target;
     private Set<CreatureVisualBuffer> proxy = new HashSet<>();
     private Thread updatingThread = new Thread();
+    private HashMap<Integer, Color> userColors = new HashMap<>();
 
     void setTarget(ObservableList<CreatureModel> target) {
         this.target = target;
@@ -27,7 +31,7 @@ public class CreaturesCanvas extends Canvas {
             try {
                 long lastMillis = System.currentTimeMillis();
                 while (true) {
-                    Thread.sleep(1000 / 60);
+                    Thread.sleep(1000 / 30);
                     update(System.currentTimeMillis() - lastMillis);
                     lastMillis = System.currentTimeMillis();
                 }
@@ -36,6 +40,18 @@ public class CreaturesCanvas extends Canvas {
         });
         updatingThread.setDaemon(true);
         updatingThread.start();
+
+        AnimationTimer timer = new AnimationTimer() {
+            @Override
+            public void handle(long now) {
+                draw();
+            }
+        };
+        timer.start();
+    }
+
+    public HashMap<Integer, Color> getUserColors() {
+        return userColors;
     }
 
     private void update(long delta) {
@@ -47,25 +63,25 @@ public class CreaturesCanvas extends Canvas {
                 proxy.add(new CreatureVisualBuffer(model));
         }
 
+        // TODO: remove from proxy
+    }
+
+    private void draw() {
         GraphicsContext context = getGraphicsContext2D();
         context.clearRect(0, 0, getWidth(), getHeight());
         context.save();
 
         if (getWidth() < getHeight()) {
-            double ratio = getWidth()/AREA_SIZE;
+            double ratio = getWidth()/(AREA_SIZE + PADDING*2);
             context.scale(ratio, ratio);
-            context.translate(0, (getHeight() - AREA_SIZE*ratio)/2);
+            context.translate(PADDING, (getHeight() - AREA_SIZE*ratio)/2 + PADDING);
         } else {
-            // TODO
-            double ratio = getHeight()/AREA_SIZE;
+            double ratio = getHeight()/(AREA_SIZE + PADDING*2);
             context.scale(ratio, ratio);
-            context.translate((getWidth() - AREA_SIZE*ratio)/2, 0);
+            context.translate((getWidth() - AREA_SIZE*ratio)/2 + PADDING, PADDING);
         }
 
-        proxy.forEach((b) -> {
-            // TODO: remove from proxy
-            b.draw(context);
-        });
+        proxy.forEach((b) -> b.draw(context));
         context.setStroke(Color.BLACK);
         context.setLineWidth(2);
         context.strokePolygon(
@@ -89,7 +105,7 @@ public class CreaturesCanvas extends Canvas {
         private int actualX;
         private int actualY;
 
-        private double[] rayData = new double[32];
+        private double[] rayData = new double[64];
 
         private CreatureVisualBuffer(CreatureModel origin) {
             this.origin = origin;
@@ -104,8 +120,14 @@ public class CreaturesCanvas extends Canvas {
          */
         private void draw(GraphicsContext context) {
             context.save();
-            context.setFill(Color.GREEN); // TODO
-            context.setStroke(Color.GREEN.darker()); // TODO
+
+            Color color = Color.rgb(128, 128, 128, .5);
+
+            if (userColors.containsKey(origin.getOwnerid()))
+                color = userColors.get(origin.getOwnerid());
+
+            context.setFill(color);
+            context.setStroke(color.darker());
             context.setLineWidth(10);
 
             double[] xPoints = new double[rayData.length];
@@ -119,6 +141,13 @@ public class CreaturesCanvas extends Canvas {
 
             context.fillPolygon(xPoints, yPoints, rayData.length);
             context.strokePolygon(xPoints, yPoints, rayData.length);
+
+            context.setFill(Color.BLACK); // TODO
+            context.setTextAlign(TextAlignment.CENTER);
+            context.setFont(new Font(24));
+            context.setTextBaseline(VPos.CENTER);
+            context.fillText(origin.getName(), actualX, actualY);
+
             context.restore();
         }
 
@@ -128,14 +157,29 @@ public class CreaturesCanvas extends Canvas {
          */
         private void update(long delta) {
             for (int i = 0, rayDataLength = rayData.length; i < rayDataLength; i++) {
-                rayData[i]++;
+                rayData[i] += 2;
                 double limit = origin.getRadius();
 
-                Point2D[][] stuff = new Point2D[4][];
-                stuff[0] = new Point2D[]{new Point2D(0, 0), new Point2D(AREA_SIZE, 0)};
-                stuff[1] = new Point2D[]{new Point2D(AREA_SIZE, 0), new Point2D(AREA_SIZE, AREA_SIZE)};
-                stuff[2] = new Point2D[]{new Point2D(AREA_SIZE, AREA_SIZE), new Point2D(0, AREA_SIZE)};
-                stuff[3] = new Point2D[]{new Point2D(0, AREA_SIZE), new Point2D(0, 0)};
+                // Линии столкновения
+                ArrayList<Point2D[]> stuff = new ArrayList<>(proxy.size() + 4);
+                stuff.add(new Point2D[]{new Point2D(0, 0), new Point2D(AREA_SIZE, 0)});
+                stuff.add(new Point2D[]{new Point2D(AREA_SIZE, 0), new Point2D(AREA_SIZE, AREA_SIZE)});
+                stuff.add(new Point2D[]{new Point2D(AREA_SIZE, AREA_SIZE), new Point2D(0, AREA_SIZE)});
+                stuff.add(new Point2D[]{new Point2D(0, AREA_SIZE), new Point2D(0, 0)});
+
+                for (CreatureVisualBuffer current : proxy) {
+                    if (current.origin == origin)   // Не обрабатывать столкновение с самим собой
+                        continue;
+
+                    Point2D[] intersection = Utils.getCirclesIntersection(
+                            new Point2D(origin.getX(), origin.getY()),
+                            new Point2D(current.origin.getX(), current.origin.getY()),
+                            origin.getRadius(),
+                            current.origin.getRadius()
+                    );
+                    if (intersection.length == 2)
+                        stuff.add(intersection);
+                }
 
                 for (Point2D[] line : stuff) {
                     Point2D intersection = Utils.getLinesIntersection(
@@ -154,7 +198,7 @@ public class CreaturesCanvas extends Canvas {
                 }
 
                 if (rayData[i] > limit)
-                    rayData[i] += (limit - rayData[i])/10f;
+                    rayData[i] += (limit - rayData[i])/10f - 2;
             }
             actualX += (origin.getX() - actualX)/10f;
             actualY += (origin.getY() - actualY)/10f;
