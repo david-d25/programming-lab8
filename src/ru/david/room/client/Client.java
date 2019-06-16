@@ -49,7 +49,7 @@ public class Client {
                 ResourceBundle.getBundle("i18n/text", new Locale("es", "DO"), new UTF8BundleControl())
         );
         resourceBundles.put(
-                new Locale("id", "IT"),
+                new Locale("it", "IT"),
                 ResourceBundle.getBundle("i18n/text", new Locale("it", "IT"), new UTF8BundleControl())
         );
         resourceBundles.put(

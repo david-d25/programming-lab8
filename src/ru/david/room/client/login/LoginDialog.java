@@ -15,6 +15,7 @@ import ru.david.room.Message;
 import ru.david.room.client.Client;
 import ru.david.room.client.WelcomePhrases;
 import ru.david.room.client.registration.RegisterDialog;
+import ru.david.room.client.registration.RegisterDialogListener;
 import ru.david.room.client.settings.SettingsDialog;
 
 import java.io.FileInputStream;
@@ -79,8 +80,6 @@ public class LoginDialog {
                 FileInputStream imageStream = new FileInputStream("resources/img/watermelon.png");
                 imageView.setImage(new Image(imageStream));
             }
-
-
 
             emailField.setText(emailTextBackup);
             passwordField.setText(passwordTextBackup);

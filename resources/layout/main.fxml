@@ -73,7 +73,7 @@
                     <CreaturesTable fx:id="creaturesTable"/>
                 </ScrollPane>
             </Tab>
-            <Tab closable="false" text="%main.canvas-tab-title">
+            <Tab closable="false" fx:id="creatureCanvasTab" text="%main.canvas-tab-title">
                 <CreaturesCanvas fx:id="creaturesCanvas"/>
             </Tab>
 
@@ -101,7 +101,7 @@
       <columnConstraints>
          <ColumnConstraints hgrow="ALWAYS" />
          <ColumnConstraints hgrow="ALWAYS" minWidth="10.0" prefWidth="100.0" />
-         <ColumnConstraints hgrow="ALWAYS" minWidth="200.0" prefWidth="100.0" />
+         <ColumnConstraints hgrow="ALWAYS" minWidth="350.0" prefWidth="350.0" />
       </columnConstraints>
 
       <rowConstraints>

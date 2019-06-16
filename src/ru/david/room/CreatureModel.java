@@ -49,6 +49,17 @@ public class CreatureModel implements Serializable, Comparable<CreatureModel> {
         return result;
     }
 
+    public void setFromCreatureModel(CreatureModel model) {
+        id = model.id;
+        x = model.x;
+        y = model.y;
+        radius = model.radius;
+        ownerid = model.ownerid;
+        name = model.name;
+        created = model.created;
+
+    }
+
     /**
      * Уникальный идентифкатор существа. Можно использовать для сравнения существ.
      * У двух одинаковых по параметрам существ может быть разный идентификатор.

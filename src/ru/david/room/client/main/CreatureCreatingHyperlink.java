@@ -1,6 +1,5 @@
 package ru.david.room.client.main;
 
-import javafx.animation.FadeTransition;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -13,7 +12,6 @@ import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-import javafx.util.Duration;
 import ru.david.room.client.Client;
 
 import java.util.ResourceBundle;

@@ -1,5 +1,8 @@
 package ru.david.room;
 
+import javafx.geometry.Dimension2D;
+import javafx.geometry.Point2D;
+
 import javax.mail.internet.AddressException;
 import javax.mail.internet.InternetAddress;
 import java.lang.reflect.Field;
@@ -26,6 +29,78 @@ public class Utils {
             result = false;
         }
         return result;
+    }
+
+    /**
+     * Понятия не имею как, но функция возвращает точку пересечения двух отрезков.
+     * Если точки нет, возвращает null.
+     *
+     * @param a1 точка отрезка 1
+     * @param a2 точка отрезка 1
+     * @param b1 точка отрезка 2
+     * @param b2 точка отрезка 2
+     * @return точка пересечения или null
+     */
+    public static Point2D getLinesIntersection(Point2D a1, Point2D a2, Point2D b1, Point2D b2) {
+        double angle1Ratio = (a2.getY() - a1.getY())/(a2.getX() - a1.getX());
+        double angle2Ratio = (b2.getY() - b1.getY())/(b2.getX() - b1.getX());
+
+        if (    angle1Ratio != angle1Ratio || angle2Ratio != angle2Ratio ||
+                Double.isInfinite(angle1Ratio) && Double.isInfinite(angle2Ratio) ||
+                (angle1Ratio == angle2Ratio)
+        ) return null;
+
+        // Если какой-то отрезон вертикальный
+        if (Double.isInfinite(angle1Ratio) || Double.isInfinite(angle2Ratio)) {
+            double resultX, resultY, offset;
+            Point2D p1, p2;
+
+            if (Double.isInfinite(angle1Ratio)) {
+                resultX = a1.getX();
+                offset = b1.getY() - angle2Ratio * b1.getX();
+                resultY = angle2Ratio * resultX + offset;
+                p1 = b1;
+                p2 = b2;
+            } else {
+                resultX = b1.getX();
+                offset = a1.getY() - angle1Ratio * a1.getX();
+                resultY = angle1Ratio * resultX + offset;
+                p1 = a1;
+                p2 = a2;
+            }
+
+            if (    (p1.getX() < resultX && p2.getX() < resultX) ||
+                    (p1.getX() > resultX && p2.getX() > resultX)
+            ) return null;
+
+            double avgY = (p1.getY() + p2.getY())/2;
+            double height = Math.abs(p1.getY() - p2.getY());
+
+            if (Math.abs(resultY - avgY) <= height/2)
+                return new Point2D(resultX, resultY);
+            else
+                return null;
+        }
+
+        double offsetB = b1.getY() - angle2Ratio * b1.getX();
+        double offsetA = a1.getY() - angle1Ratio * a1.getX();
+
+        // Точка пересечения двух ПРЯМЫХ, образованных отрезками
+        double resultX = (offsetB - offsetA)/(angle1Ratio - angle2Ratio);
+        double resultY = angle1Ratio * resultX + offsetA;
+
+        // Проверяем, что точка лежит в обоих отрезках
+        Point2D avg1Point = new Point2D((a1.getX() + a2.getX())/2, (a1.getY() + a2.getY())/2);
+        Dimension2D rectA = new Dimension2D(Math.abs(a1.getX() - a2.getX()), Math.abs(a1.getY() - a2.getY()));
+        Point2D avg2Point = new Point2D((b1.getX() + b2.getX())/2, (b1.getY() + b2.getY())/2);
+        Dimension2D rectB = new Dimension2D(Math.abs(b1.getX() - b2.getX()), Math.abs(b1.getY() - b2.getY()));
+
+        if (    (Math.abs(resultX - avg1Point.getX()) <= rectA.getWidth()/2) &&
+                (Math.abs(resultY - avg1Point.getY()) <= rectA.getHeight()/2) &&
+                (Math.abs(resultX - avg2Point.getX()) <= rectB.getWidth()/2) &&
+                (Math.abs(resultY - avg2Point.getY()) <= rectB.getHeight()/2)
+        ) return new Point2D(resultX, resultY);
+        return null;
     }
 
     /**

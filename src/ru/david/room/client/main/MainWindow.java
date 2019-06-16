@@ -7,10 +7,7 @@ import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Scene;
-import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.Label;
-import javafx.scene.control.ScrollPane;
+import javafx.scene.control.*;
 import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -47,10 +44,11 @@ public class MainWindow extends Application {
 
     private Thread receivingThread;
 
-    @FXML private Circle userColorCircle;
     @FXML private Label userNameLabel;
-    @FXML private Label creaturesCountLabel;
     @FXML private UsersList usersList;
+    @FXML private Tab creatureCanvasTab;
+    @FXML private Circle userColorCircle;
+    @FXML private Label creaturesCountLabel;
     @FXML private CreaturesTable creaturesTable;
     @FXML private Label selectCreaturesLabel;
     @FXML private ScrollPane propertiesScrollPane;
@@ -200,6 +198,11 @@ public class MainWindow extends Application {
 
             creaturePropertiesPane.setDeletingListener(creatureId -> sendMessage("delete_creature", creatureId));
             creaturePropertiesPane.setApplyingListener(model -> sendMessage("modify_creature", model));
+
+            creaturesCanvas.setTarget(creaturesTable.getItems());
+
+            creaturesCanvas.widthProperty().bind(creatureCanvasTab.getTabPane().widthProperty());
+            creaturesCanvas.heightProperty().bind(creatureCanvasTab.getTabPane().heightProperty());
         } catch (Exception e) {
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle(bundle.getString("login-dialog.error-alert-title"));
@@ -315,7 +318,7 @@ public class MainWindow extends Application {
                 ObservableList<CreatureModel> items = creaturesTable.getItems();
                 for (int i = 0, itemsSize = items.size(); i < itemsSize; i++) {
                     if (items.get(i).getId() == model.getId()) {
-                        creaturesTable.getItems().set(i, model);
+                        creaturesTable.getItems().get(i).setFromCreatureModel(model);
                         creaturesTable.getSelectionModel().select(i);
                         break;
                     }
