@@ -45,6 +45,10 @@ public class Client {
                 ResourceBundle.getBundle("i18n/text", currentLocale)
         );
         resourceBundles.put(
+                new Locale("en", "US"),
+                ResourceBundle.getBundle("i18n/text", new Locale("en", "US"))
+        );
+        resourceBundles.put(
                 new Locale("es", "DO"),
                 ResourceBundle.getBundle("i18n/text", new Locale("es", "DO"), new UTF8BundleControl())
         );
