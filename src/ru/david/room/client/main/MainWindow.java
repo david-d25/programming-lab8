@@ -54,6 +54,7 @@ public class MainWindow extends Application {
     @FXML private ScrollPane propertiesScrollPane;
     @FXML private CreaturesCanvas creaturesCanvas;
     @FXML private CreaturePropertiesPane creaturePropertiesPane;
+
     @FXML private CreatureCreatingHyperlink creatureCreatingHyperlink;
 
     @Override
@@ -120,13 +121,13 @@ public class MainWindow extends Application {
         Thread aliveDetectingThread = new Thread(() -> {
             try {
                 Thread.sleep(10000);
-                stage.getScene().setOnMouseMoved(e -> {
+                Platform.runLater(() -> stage.getScene().setOnMouseMoved(e -> {
                     stage.getScene().setOnMouseMoved(null);
                     sendMessage("i_am_alive");
                     initAliveDetectingThread();
-                });
+                }));
             } catch (InterruptedException e) {
-                System.out.println("[ WARN ] Alive detecting thread has been interrupted");
+                System.err.println("[ WARN ] Alive detecting thread has been interrupted");
                 initAliveDetectingThread();
             }
         });
@@ -181,7 +182,10 @@ public class MainWindow extends Application {
             stage.setHeight(height);
 
             creaturesTable.getSelectionModel().selectedItemProperty().addListener(
-                    (observable, oldValue, newValue) -> onCreatureSelected(newValue)
+                    (observable, oldValue, newValue) -> {
+                        onCreatureSelected(newValue);
+                        creaturesCanvas.selectCreature(newValue);
+                    }
             );
 
             updateCreaturesCountText();
@@ -203,6 +207,13 @@ public class MainWindow extends Application {
 
             creaturesCanvas.widthProperty().bind(creatureCanvasTab.getTabPane().widthProperty());
             creaturesCanvas.heightProperty().bind(creatureCanvasTab.getTabPane().heightProperty());
+            creaturesCanvas.setSelectingListener((m) -> {
+                if (m != null)
+                    creaturesTable.getSelectionModel().select(m);
+                else
+                    creaturesTable.getSelectionModel().clearSelection();
+            });
+            sendMessage("request_users");
         } catch (Exception e) {
             Alert alert = new Alert(Alert.AlertType.ERROR);
             alert.setTitle(bundle.getString("login-dialog.error-alert-title"));
