@@ -2,10 +2,7 @@ package ru.david.room.client.main;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.Slider;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -25,6 +22,11 @@ public class CreaturePropertiesPane extends VBox {
     private TextField nameInput;
     private Slider xInput, yInput, radiusInput;
     private Button applyButton, resetButton, deleteButton;
+    private CheckBox autoApplyCheckbox;
+
+    private boolean autoApplyingEnabled = true;
+
+    private Thread debounceThread = new Thread();
 
     public CreaturePropertiesPane() {
         ResourceBundle bundle = Client.currentResourceBundle();
@@ -44,6 +46,8 @@ public class CreaturePropertiesPane extends VBox {
         resetButton = new Button(bundle.getString("main.reset"));
         deleteButton = new Button(bundle.getString("main.delete"));
 
+        autoApplyCheckbox = new CheckBox(bundle.getString("main.auto-apply"));
+
         xInput.setBlockIncrement(1);
         xInput.setShowTickLabels(true);
         xInput.setShowTickMarks(true);
@@ -55,6 +59,8 @@ public class CreaturePropertiesPane extends VBox {
         radiusInput.setBlockIncrement(1);
         radiusInput.setShowTickLabels(true);
         radiusInput.setShowTickMarks(true);
+
+        autoApplyCheckbox.setSelected(true);
 
         HBox nameInputPane = new HBox(new Label(bundle.getString("main.name")), nameInput);
         nameInputPane.setAlignment(Pos.CENTER_LEFT);
@@ -68,6 +74,8 @@ public class CreaturePropertiesPane extends VBox {
         HBox buttonsPane = new HBox(applyButton, resetButton, deleteButton);
         buttonsPane.setAlignment(Pos.CENTER);
 
+        HBox autoApplyPane = new HBox(autoApplyCheckbox);
+
         HBox.setMargin(nameInput, new Insets(5));
         HBox.setMargin(applyButton, new Insets(5));
         HBox.setMargin(resetButton, new Insets(5));
@@ -75,13 +83,15 @@ public class CreaturePropertiesPane extends VBox {
         HBox.setMargin(xInput, new Insets(5));
         HBox.setMargin(yInput, new Insets(5));
         HBox.setMargin(radiusInput, new Insets(5));
+        HBox.setMargin(autoApplyCheckbox, new Insets(5));
 
         getChildren().addAll(
                 nameInputPane,
                 new HBox(new Label("X"), xInput),
                 new HBox(new Label("Y"), yInput),
                 new HBox(new Label(bundle.getString("main.radius")), radiusInput),
-                buttonsPane
+                buttonsPane,
+                autoApplyPane
         );
 
         nameInput.textProperty().addListener((observable, oldValue, newValue) -> onEdited());
@@ -95,6 +105,7 @@ public class CreaturePropertiesPane extends VBox {
     }
 
     void selectCreature(CreatureModel model, boolean editable) {
+        autoApplyingEnabled = false;
         selected = model;
 
         applyButton.setDisable(true);
@@ -111,6 +122,7 @@ public class CreaturePropertiesPane extends VBox {
             resetProperties();
             setDisable(false);
         }
+        autoApplyingEnabled = true;
     }
 
     void setApplyingListener(CreatureApplyingListener applyingListener) {
@@ -124,19 +136,31 @@ public class CreaturePropertiesPane extends VBox {
     private void onEdited() {
         applyButton.setDisable(false);
         resetButton.setDisable(false);
+
+        if (autoApplyCheckbox.isSelected() && autoApplyingEnabled)
+            onApply();
     }
 
     private void onApply() {
         if (nameInput.getText().length() == 0 || nameInput.getText().length() > 32)
             return; // TODO: Show warning
-        applyingListener.applyRequested(new CreatureModel(
-                        selected.getId(),
-                        (int)xInput.getValue(),
-                        (int)yInput.getValue(),
-                        (float)radiusInput.getValue(),
-                        selected.getOwnerid(),
-                        nameInput.getText()
-        ));
+        if (!debounceThread.isAlive()) {
+            debounceThread = new Thread(() -> {
+                try {
+                    Thread.sleep(300);
+                    applyingListener.applyRequested(new CreatureModel(
+                            selected.getId(),
+                            (int)xInput.getValue(),
+                            (int)yInput.getValue(),
+                            (float)radiusInput.getValue(),
+                            selected.getOwnerid(),
+                            nameInput.getText()
+                    ));
+                } catch (InterruptedException ignored) {
+                }
+            });
+            debounceThread.start();
+        }
     }
 
     private void onReset() {

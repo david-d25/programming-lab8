@@ -14,6 +14,7 @@ import javafx.util.StringConverter;
 import ru.david.room.Message;
 import ru.david.room.client.Client;
 import ru.david.room.client.WelcomePhrases;
+import ru.david.room.client.forgot_password.ForgotPasswordDialog;
 import ru.david.room.client.registration.RegisterDialog;
 import ru.david.room.client.registration.RegisterDialogListener;
 import ru.david.room.client.settings.SettingsDialog;
@@ -179,6 +180,12 @@ public class LoginDialog {
             emailField.setDisable(false);
             passwordField.setDisable(false);
         }
+    }
+
+    @FXML
+    public void onForgotPasswordClicked() {
+        stage.hide();
+        new ForgotPasswordDialog(() -> stage.show());
     }
 
     @FXML

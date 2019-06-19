@@ -26,6 +26,17 @@ public class CreaturesCanvas extends Canvas {
 
     private CreatureSelectingListener listener = model -> {};
 
+    private AnimationTimer timer = new AnimationTimer() {
+        @Override
+        public void handle(long now) {
+            draw();
+        }
+    };
+
+    void clearProxy() {
+        proxy.clear();
+    }
+
     void setTarget(ObservableList<CreatureModel> target) {
         this.target = target;
 
@@ -37,7 +48,7 @@ public class CreaturesCanvas extends Canvas {
             try {
                 long lastMillis = System.currentTimeMillis();
                 while (true) {
-                    Thread.sleep(1000 / 30);
+                    Thread.sleep(1000 / 60);
                     update(System.currentTimeMillis() - lastMillis);
                     lastMillis = System.currentTimeMillis();
                 }
@@ -47,12 +58,7 @@ public class CreaturesCanvas extends Canvas {
         updatingThread.setDaemon(true);
         updatingThread.start();
 
-        AnimationTimer timer = new AnimationTimer() {
-            @Override
-            public void handle(long now) {
-                draw();
-            }
-        };
+
         timer.start();
 
         setOnMouseClicked(e -> onClicked(e.getX(), e.getY()));
@@ -80,7 +86,10 @@ public class CreaturesCanvas extends Canvas {
         this.listener = listener;
     }
 
-    private void onClicked(double x, double y) {
+    private Point2D unproject(Point2D point) {
+        double x = point.getX();
+        double y = point.getY();
+
         double scale = getScale();
         Point2D translate = getTranslate();
 
@@ -100,9 +109,19 @@ public class CreaturesCanvas extends Canvas {
         x = a*x + c*y + e;
         y = b*c + d*y + f;
 
+        return new Point2D(x, y);
+    }
+
+    private void onClicked(double x, double y) {
+
+        Point2D unprojected = unproject(new Point2D(x, y));
+
+        x = unprojected.getX();
+        y = unprojected.getY();
+
         for (CreatureVisualBuffer current : proxy) {
-            if (    Math.sqrt(  Math.pow(current.origin.getX() - x, 2) +
-                                Math.pow(current.origin.getY() - y, 2)
+            if (    Math.sqrt(  Math.pow(current.visualX - x, 2) +
+                                Math.pow(current.visualY - y, 2)
                     ) < current.origin.getRadius()
             ) {
                 listener.selected(current.origin);
@@ -203,7 +222,7 @@ public class CreaturesCanvas extends Canvas {
             Color color = Color.rgb(128, 128, 128, .5);
 
             if (userColors.containsKey(origin.getOwnerid()))
-                color = userColors.get(origin.getOwnerid());
+                color = userColors.get(origin.getOwnerid()).deriveColor(0, 1, 1, .5);
 
             context.setFill(color);
             context.setStroke(color.darker());

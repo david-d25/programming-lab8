@@ -203,6 +203,7 @@ public class MainWindow extends Application {
             creaturePropertiesPane.setDeletingListener(creatureId -> sendMessage("delete_creature", creatureId));
             creaturePropertiesPane.setApplyingListener(model -> sendMessage("modify_creature", model));
 
+            creaturesCanvas.clearProxy();
             creaturesCanvas.setTarget(creaturesTable.getItems());
 
             creaturesCanvas.widthProperty().bind(creatureCanvasTab.getTabPane().widthProperty());

@@ -48,6 +48,6 @@
         <VBox.margin>
             <Insets bottom="10" />
         </VBox.margin>
-        <Hyperlink disable="true" text="%login-dialog.forgot-password" />
+        <Hyperlink text="%login-dialog.forgot-password" onMouseClicked="#onForgotPasswordClicked"/>
     </TextFlow>
 </VBox>
