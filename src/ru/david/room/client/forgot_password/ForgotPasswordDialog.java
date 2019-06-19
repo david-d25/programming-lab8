@@ -180,8 +180,8 @@ public class ForgotPasswordDialog {
                 case "OK":
                     listener.dialogClosed();
                     Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                    alert.setHeaderText(bundle.getString("register-dialog.registration-confirmed-title")); // todo
-                    alert.setContentText(bundle.getString("register-dialog.registration-confirmed-text")); // todo
+                    alert.setHeaderText(bundle.getString("register-dialog.registration-confirmed-title"));
+                    alert.setContentText(bundle.getString("register-dialog.registration-confirmed-text"));
                     alert.show();
                     stage.close();
                     break;
