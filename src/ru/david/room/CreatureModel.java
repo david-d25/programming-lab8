@@ -57,7 +57,6 @@ public class CreatureModel implements Serializable, Comparable<CreatureModel> {
         ownerid = model.ownerid;
         name = model.name;
         created = model.created;
-
     }
 
     /**

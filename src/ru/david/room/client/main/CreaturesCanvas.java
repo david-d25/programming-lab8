@@ -19,7 +19,7 @@ public class CreaturesCanvas extends Canvas {
     private static final int PADDING = 50;
 
     private ObservableList<CreatureModel> target;
-    private Set<CreatureVisualBuffer> proxy = new HashSet<>();
+    private final Set<CreatureVisualBuffer> proxy = new HashSet<>();
     private Thread updatingThread = new Thread();
     private HashMap<Integer, Color> userColors = new HashMap<>();
     private CreatureVisualBuffer selected = null;
@@ -49,15 +49,17 @@ public class CreaturesCanvas extends Canvas {
                 long lastMillis = System.currentTimeMillis();
                 while (true) {
                     Thread.sleep(1000 / 60);
-                    update(System.currentTimeMillis() - lastMillis);
+                    synchronized (proxy) {
+                        update(System.currentTimeMillis() - lastMillis);
+                    }
                     lastMillis = System.currentTimeMillis();
                 }
             } catch (InterruptedException ignored) {
+                System.out.println("WARNING: Updating thread has been interrupted");
             }
         });
         updatingThread.setDaemon(true);
         updatingThread.start();
-
 
         timer.start();
 
@@ -133,14 +135,24 @@ public class CreaturesCanvas extends Canvas {
     }
 
     private void update(long delta) {
-        for (CreatureModel model : target) {
-            Optional<CreatureVisualBuffer> creatureBuffer = proxy.stream().filter((b) -> b.origin.getId() == model.getId()).findAny();
-            if (creatureBuffer.isPresent())
-                creatureBuffer.get().update(delta);
-            else
-                proxy.add(new CreatureVisualBuffer(model));
-        }
+        synchronized (proxy) {
+            for (CreatureModel model : target) {
+                Optional<CreatureVisualBuffer> creatureBuffer = proxy.stream().filter((b) -> b.origin.getId() == model.getId()).findAny();
+                if (creatureBuffer.isPresent())
+                    creatureBuffer.get().update(delta);
+                else
+                    proxy.add(new CreatureVisualBuffer(model));
+            }
 
+            Set<CreatureVisualBuffer> toRemove = new HashSet<>();
+
+            for (CreatureVisualBuffer buffer : proxy) {
+                Optional<CreatureModel> model = target.stream().filter((m) -> m.getId() == buffer.origin.getId()).findAny();
+                if (!model.isPresent())
+                    toRemove.add(buffer);
+            }
+            toRemove.forEach(proxy::remove);
+        }
         // TODO: remove from proxy
     }
 
