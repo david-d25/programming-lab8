@@ -35,12 +35,10 @@ public class RequestResolver implements HubFriendly {
 
     private class AsyncResolver extends Thread {
         private final ClientPool.ClientConnector connector;
-        private ObjectOutputStream out;
         private Message message;
 
         AsyncResolver(ClientPool.ClientConnector c, Message m) {
             connector = c;
-            out = c.getOut();
             message = m;
             start();
         }
@@ -91,12 +89,10 @@ public class RequestResolver implements HubFriendly {
                     logger.err("Произошла ошибка отправки электронного письма при выполнении команды " + command + ":\n" + e.toString());
                     response = new Message("INTERNAL_ERROR");
                 } finally {
-                    synchronized (connector) {
-                        if (response != null)
-                            out.writeObject(response);
-                    }
+                    if (response != null)
+                        connector.sendMessage(response);
                 }
-            } catch (IOException | NullPointerException e) {
+            } catch (NullPointerException e) {
                 logger.warn("Не получилось отправить ответ: " + e.toString());
                 hub.getClientPool().removeConnector(connector);
 //                e.printStackTrace();

@@ -84,7 +84,7 @@ public class ClientPool implements HubFriendly {
             }
         }
 
-        void sendMessage(Message message) {
+        synchronized void sendMessage(Message message) {
             try {
                 out.writeObject(message);
                 out.flush();
